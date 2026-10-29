@@ -272,6 +272,9 @@ const UI: Record<string, string> = {
   glow: raw(128, 128, `<defs><radialGradient id="r"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="64" fill="url(#r)"/>`),
 };
 
+// App icon, shown in the opening animation.
+const APP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 200 200"> <rect width="200" height="200" rx="44" fill="#2447A0"/> <rect x="48" y="48" width="104" height="104" rx="10" fill="#C8553D" transform="rotate(45 100 100)"/> <rect x="48" y="48" width="104" height="104" rx="10" fill="#E8A33D"/> <circle cx="100" cy="100" r="38" fill="#F6EBD9"/> <path d="M86 124 L86 100 A16 16 0 1 1 114 100 L114 124 Z" fill="#2447A0"/> <path transform="translate(163 37) scale(1.5)" d="M0 -10 Q1.6 -1.6 10 0 Q1.6 1.6 0 10 Q-1.6 1.6 -10 0 Q-1.6 -1.6 0 -10 Z" fill="#F6EBD9"/> <path transform="translate(36 162)" d="M0 -10 Q1.6 -1.6 10 0 Q1.6 1.6 0 10 Q-1.6 1.6 -10 0 Q-1.6 -1.6 0 -10 Z" fill="#F6EBD9"/> </svg>`;
+
 // Riad courtyard behind the game: sky, horseshoe arches, zellige wainscot.
 const COURTYARD = raw(720, H, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5845a"/><stop offset=".55" stop-color="#cf6a40"/><stop offset="1" stop-color="#b5532e"/></linearGradient>
   <pattern id="t" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M0 0 H120 V120" fill="none" stroke="#8f3c1e" stroke-width="3" opacity=".45"/><path d="M4 4 H116" stroke="#f2a57c" stroke-width="2" opacity=".35"/>
@@ -331,7 +334,7 @@ const arch = ([top, bottom]: [string, string]) => raw(220, 250, `<defs><linearGr
     <path d="M52 110 Q60 70 96 60" stroke="#fff" stroke-width="6" fill="none" opacity=".5" stroke-linecap="round"/>`);
 
 export function artEntries(): [string, string][] {
-  const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD]];
+  const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD], ['appIcon', APP_ICON]];
   for (const [k, b] of Object.entries(UI)) out.push([k, b]);
   for (const [k, c] of Object.entries(ARCH_COLORS)) out.push([`arch-${k}`, arch(c)]);
   for (const [k, b] of Object.entries(ROOMS)) out.push([`room-${k}`, b]);

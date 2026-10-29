@@ -4,6 +4,7 @@ import { GameScene } from './GameScene';
 import { ChainScene } from './ChainScene';
 import { RiadScene } from './RiadScene';
 import { ShopScene } from './ShopScene';
+import { SplashScene } from './SplashScene';
 import { H, W } from './ui';
 
 // Turns every SVG into a texture before the game scene starts.
@@ -25,7 +26,7 @@ class BootScene extends Phaser.Scene {
           img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
         }),
     );
-    Promise.all(jobs).then(() => this.scene.start('game'));
+    Promise.all(jobs).then(() => this.scene.start('splash'));
   }
 }
 
@@ -34,5 +35,5 @@ class BootScene extends Phaser.Scene {
   parent: 'game',
   backgroundColor: '#b5532e',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: W, height: H },
-  scene: [BootScene, GameScene, RiadScene, ShopScene, ChainScene],
+  scene: [BootScene, SplashScene, GameScene, RiadScene, ShopScene, ChainScene],
 });
