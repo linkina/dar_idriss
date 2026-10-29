@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import { CHAINS, CHARACTERS, COLS, ENERGY_MAX, MAX_LEVEL, ROWS } from './data';
+import { ALL_TASKS, CHAINS, CHARACTERS, COLS, ENERGY_MAX, MAX_LEVEL, ROWS } from './data';
 import { Sounds } from './sound';
-import { load, makeOrder, msToNextEnergy, save, tickEnergy, type Cell, type Order, type Save } from './state';
+import { load, makeOrder, msToNextEnergy, save, tickEnergy, today, type Cell, type Order, type Save } from './state';
 
 const W = 720;
 const CELL = 96;
@@ -24,6 +24,9 @@ export class GameScene extends Phaser.Scene {
   private timerText!: Phaser.GameObjects.Text;
   private coinText!: Phaser.GameObjects.Text;
   private starText!: Phaser.GameObjects.Text;
+  private dirhamText!: Phaser.GameObjects.Text;
+  private riadBadge!: Phaser.GameObjects.Arc;
+  private shopBadge!: Phaser.GameObjects.Arc;
   private info!: Phaser.GameObjects.Text;
   private soundIcon!: Phaser.GameObjects.Image;
   private orderLayer!: Phaser.GameObjects.Container;
@@ -59,9 +62,12 @@ export class GameScene extends Phaser.Scene {
 
     this.add.rectangle(0, 1226, W, 54, 0xffffff, 0.85).setOrigin(0);
     this.add.rectangle(0, 1226, W, 3, 0x3cb4e0).setOrigin(0);
-    this.info = this.add.text(W / 2, 1253, '', { fontFamily: FONT, fontSize: '20px', color: INK, align: 'center', wordWrap: { width: W - 32 } }).setOrigin(0.5);
+    this.info = this.add.text(W / 2, 1253, '', { fontFamily: FONT, fontSize: '18px', color: INK, align: 'center', wordWrap: { width: W - 200 } }).setOrigin(0.5);
+    this.riadBadge = this.roundButton(54, 1238, 'icon-riad', 'Riad', () => this.openRiad());
+    this.shopBadge = this.roundButton(W - 54, 1238, 'icon-shop', 'Boutique', () => this.openShop());
     this.say('Bienvenue à Dar Idriss ! Touche le jardin de menthe pour faire pousser une feuille.');
 
+    this.placeInbox();
     this.renderBoard();
     this.renderOrders();
     this.refreshHud();
@@ -72,19 +78,23 @@ export class GameScene extends Phaser.Scene {
 
   private drawTopBar() {
     const pill = (x: number, w: number) => this.add.image(x, 46, 'pill').setOrigin(0, 0.5).setDisplaySize(w, 60);
-    pill(16, 230);
-    pill(262, 180);
-    pill(458, 150);
-    this.add.image(46, 46, 'icon-energy').setDisplaySize(44, 44);
-    this.energyText = this.add.text(74, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
-    this.timerText = this.add.text(152, 36, '', { fontFamily: FONT, fontSize: '18px', color: '#2a7fb8', fontStyle: 'bold' });
-    this.add.image(292, 46, 'icon-coin').setDisplaySize(42, 42);
-    this.coinText = this.add.text(322, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
-    this.add.image(488, 46, 'icon-star').setDisplaySize(42, 42);
-    this.starText = this.add.text(518, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
-    this.add.circle(668, 49, 30, 0x2a7fb8, 0.4);
-    this.add.circle(668, 46, 30, 0x3cb4e0).setStrokeStyle(3, 0xffffff);
-    this.soundIcon = this.add.image(668, 46, this.s.sound ? 'icon-soundOn' : 'icon-soundOff').setDisplaySize(36, 36).setInteractive({ useHandCursor: true });
+    pill(12, 176);
+    pill(196, 150);
+    pill(354, 130);
+    pill(492, 150);
+    const hud = { fontFamily: FONT, fontSize: '26px', color: INK, fontStyle: 'bold' };
+    this.add.image(40, 46, 'icon-energy').setDisplaySize(40, 40);
+    this.energyText = this.add.text(64, 30, '', hud);
+    this.timerText = this.add.text(118, 37, '', { fontFamily: FONT, fontSize: '15px', color: '#2a7fb8', fontStyle: 'bold' });
+    this.add.image(224, 46, 'icon-coin').setDisplaySize(38, 38);
+    this.coinText = this.add.text(250, 30, '', hud);
+    this.add.image(382, 46, 'icon-star').setDisplaySize(38, 38);
+    this.starText = this.add.text(408, 30, '', hud);
+    this.add.image(520, 46, 'icon-dirham').setDisplaySize(36, 36);
+    this.dirhamText = this.add.text(546, 30, '', hud);
+    this.add.circle(678, 49, 26, 0x2a7fb8, 0.4);
+    this.add.circle(678, 46, 26, 0x3cb4e0).setStrokeStyle(3, 0xffffff);
+    this.soundIcon = this.add.image(678, 46, this.s.sound ? 'icon-soundOn' : 'icon-soundOff').setDisplaySize(30, 30).setInteractive({ useHandCursor: true });
     this.soundIcon.on('pointerup', () => {
       this.s.sound = !this.s.sound;
       this.sfx.start();
@@ -299,6 +309,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private afterChange(rerender: boolean) {
+    if (this.placeInbox()) rerender = true;
     if (rerender) this.renderBoard();
     else {
       this.drawSelection();
@@ -427,6 +438,53 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // ---------- Riad, shop, new generators ----------
+
+  // Round button in the bottom bar with a red dot for "something to do".
+  private roundButton(x: number, y: number, icon: string, label: string, onClick: () => void) {
+    this.add.circle(x, y + 4, 40, 0x2a7fb8, 0.45);
+    const b = this.add.circle(x, y, 40, 0xffffff).setStrokeStyle(4, 0x3cb4e0).setInteractive({ useHandCursor: true });
+    this.add.image(x, y - 6, icon).setDisplaySize(48, 48);
+    this.add.text(x, y + 26, label, { fontFamily: FONT, fontSize: '15px', color: INK, fontStyle: 'bold', stroke: '#fff', strokeThickness: 4 }).setOrigin(0.5);
+    b.on('pointerup', () => {
+      this.sfx.tap();
+      onClick();
+    });
+    const dot = this.add.circle(x + 28, y - 28, 10, 0xe74c3c).setStrokeStyle(3, 0xffffff);
+    this.tweens.add({ targets: dot, scale: 1.25, duration: 500, yoyo: true, repeat: -1 });
+    return dot;
+  }
+
+  private openRiad() {
+    this.input.enabled = false;
+    this.scene.launch('riad', { save: this.s, sfx: this.sfx, onClose: () => this.closeOverlay() });
+  }
+
+  private openShop() {
+    this.input.enabled = false;
+    this.scene.launch('shop', { save: this.s, sfx: this.sfx, onClose: () => this.closeOverlay() });
+  }
+
+  private closeOverlay() {
+    this.input.enabled = true;
+    this.afterChange(true);
+  }
+
+  // Generators unlocked in the riad land on the board near its centre.
+  private placeInbox(): boolean {
+    let placed = false;
+    while (this.s.inbox.length) {
+      const spot = this.nearestEmpty(Math.floor((COLS * ROWS) / 2));
+      if (spot < 0) break;
+      const chain = this.s.inbox.shift()!;
+      this.s.board[spot] = { kind: 'gen', chain };
+      this.say(`Nouveau générateur : ${CHAINS[chain].generator} ! Touche-le pour créer de nouveaux objets.`);
+      placed = true;
+    }
+    if (placed) save(this.s);
+    return placed;
+  }
+
   // ---------- HUD ----------
 
   private refreshHud() {
@@ -436,9 +494,13 @@ export class GameScene extends Phaser.Scene {
       const ms = msToNextEnergy(this.s);
       const m = Math.floor(ms / 60000);
       const sec = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-      this.timerText.setText(`+1 dans ${m}:${sec}`);
-    } else this.timerText.setText('plein');
+      this.timerText.setText(`${m}:${sec}`);
+    } else this.timerText.setText('max');
     this.coinText.setText(`${this.s.coins}`);
     this.starText.setText(`${this.s.stars}`);
+    this.dirhamText.setText(`${this.s.dirhams}`);
+    const next = ALL_TASKS.find((t) => !this.s.tasksDone.includes(t.id));
+    this.riadBadge.setVisible(!!next && this.s.stars >= next.cost);
+    this.shopBadge.setVisible(this.s.lastGift !== today());
   }
 }

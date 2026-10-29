@@ -1,4 +1,4 @@
-import { CHAIN_IDS, CHARACTERS, COLS, ENERGY_MAX, ENERGY_REGEN_MS, MAX_LEVEL, ROWS, type ChainId, type CharacterId } from './data';
+import { ALL_TASKS, CHARACTERS, START_CHAINS, COLS, ENERGY_MAX, ENERGY_REGEN_MS, MAX_LEVEL, ROWS, type ChainId, type CharacterId } from './data';
 
 export type Cell =
   | { kind: 'item'; chain: ChainId; level: number }
@@ -17,6 +17,10 @@ export interface Save {
   orders: Order[];
   nextWho: number;
   sound: boolean;
+  dirhams: number;
+  tasksDone: string[];
+  lastGift: string;
+  inbox: ChainId[];
 }
 
 const KEY = 'dar-idriss-save-v1';
@@ -28,7 +32,7 @@ export function newGame(): Save {
   board[idx(5, 4)] = { kind: 'gen', chain: 'couture' };
   board[idx(2, 6)] = { kind: 'item', chain: 'menthe', level: 1 };
   board[idx(4, 6)] = { kind: 'item', chain: 'pain', level: 1 };
-  const s: Save = { board, energy: ENERGY_MAX, energyAt: Date.now(), coins: 0, stars: 0, orders: [], nextWho: 0, sound: true };
+  const s: Save = { board, energy: ENERGY_MAX, energyAt: Date.now(), coins: 0, stars: 0, orders: [], nextWho: 0, sound: true, dirhams: 20, tasksDone: [], lastGift: '', inbox: [] };
   // The first orders stay easy so the player learns by doing.
   s.orders.push({ who: 'idriss', wants: [{ chain: 'menthe', level: 2 }], coins: 4 });
   s.orders.push({ who: 'fatima', wants: [{ chain: 'pain', level: 2 }], coins: 4 });
@@ -44,7 +48,8 @@ export function idx(col: number, row: number) {
 export function load(): Save {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as Save;
+    // Older saves lack the newer fields; fill them in.
+    if (raw) return { dirhams: 20, tasksDone: [], lastGift: '', inbox: [], ...JSON.parse(raw) } as Save;
   } catch {
     // Storage can be blocked; start fresh.
   }
@@ -84,15 +89,27 @@ export function msToNextEnergy(s: Save, now = Date.now()) {
   return ENERGY_REGEN_MS - ((now - s.energyAt) % ENERGY_REGEN_MS);
 }
 
+export function unlockedChains(s: Save): ChainId[] {
+  const extra = ALL_TASKS.filter((t) => t.unlocks && s.tasksDone.includes(t.id)).map((t) => t.unlocks!);
+  return [...START_CHAINS, ...extra];
+}
+
+export const today = () => new Date().toISOString().slice(0, 10);
+
 // Orders get harder as the player earns stars.
 export function makeOrder(s: Save): Order {
   const who = CHARACTERS[s.nextWho % CHARACTERS.length].id;
   s.nextWho++;
-  const maxLevel = Math.min(MAX_LEVEL, 3 + Math.floor(s.stars / 4));
-  const count = s.stars >= 3 && Math.random() < 0.4 ? 2 : 1;
+  const chains = unlockedChains(s);
+  const progress = s.stars + s.tasksDone.length * 2;
+  const maxLevel = Math.min(MAX_LEVEL, 3 + Math.floor(progress / 5));
+  const count = progress >= 3 && Math.random() < 0.4 ? 2 : 1;
   const wants: Want[] = [];
   for (let i = 0; i < count; i++) {
-    const chain = CHAIN_IDS[Math.floor(Math.random() * CHAIN_IDS.length)];
+    // Newly unlocked chains show up more often so players use them.
+    const fresh = chains.slice(START_CHAINS.length);
+    const pool = fresh.length && Math.random() < 0.5 ? fresh : chains;
+    const chain = pool[Math.floor(Math.random() * pool.length)];
     const level = 2 + Math.floor(Math.random() * (maxLevel - 1));
     wants.push({ chain, level });
   }

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { artEntries } from './art';
 import { GameScene } from './GameScene';
+import { RiadScene } from './RiadScene';
+import { ShopScene } from './ShopScene';
 
 // Turns every SVG into a texture before the game scene starts.
 class BootScene extends Phaser.Scene {
@@ -30,5 +32,5 @@ new Phaser.Game({
   parent: 'game',
   backgroundColor: '#24507e',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: 720, height: 1280 },
-  scene: [BootScene, GameScene],
+  scene: [BootScene, GameScene, RiadScene, ShopScene],
 });
