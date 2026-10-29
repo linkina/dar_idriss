@@ -1,12 +1,26 @@
 // All game art is drawn here as small SVGs, turned into textures at boot.
 
-const svg = (body: string, size = 128) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${body}</svg>`;
+// Lighting filter that gives flat shapes volume: soft diffuse shading,
+// a specular highlight from the top left, and a drop shadow.
+const FX = `<defs><filter id="fx" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+<feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur"/>
+<feDiffuseLighting in="blur" surfaceScale="5" diffuseConstant="1.05" lighting-color="#fff" result="diff"><feDistantLight azimuth="225" elevation="48"/></feDiffuseLighting>
+<feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.22" k2="0" k3="0" k4="0" result="shaded"/>
+<feSpecularLighting in="blur" surfaceScale="5" specularConstant=".85" specularExponent="22" lighting-color="#fff" result="spec"><fePointLight x="20" y="5" z="70"/></feSpecularLighting>
+<feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+<feComposite in="shaded" in2="specIn" operator="arithmetic" k1="0" k2="1" k3=".75" k4="0" result="lit"/>
+<feComposite in="lit" in2="SourceAlpha" operator="in" result="litIn"/>
+<feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="sb"/><feOffset in="sb" dx="1.5" dy="4" result="so"/>
+<feFlood flood-color="#2b1606" flood-opacity=".38"/><feComposite in2="so" operator="in" result="shadow"/>
+<feMerge><feMergeNode in="shadow"/><feMergeNode in="litIn"/></feMerge></filter></defs>`;
+
+const svg = (body: string, size = 128, fx = true) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${fx ? FX + `<g filter="url(#fx)">${body}</g>` : body}</svg>`;
 
 const leaf = (x: number, y: number, r: number, c = '#3f9b5a') =>
   `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 0 C8 -10 22 -10 28 0 C22 10 8 10 0 0Z" fill="${c}" stroke="#25663a" stroke-width="1.5"/><path d="M2 0 L24 0" stroke="#25663a" stroke-width="1.2"/></g>`;
 
-const shadow = `<ellipse cx="50" cy="88" rx="30" ry="6" fill="#000" opacity=".15"/>`;
+const shadow = '';
 
 const ITEMS: Record<string, string[]> = {
   menthe: [
@@ -36,10 +50,10 @@ const ITEMS: Record<string, string[]> = {
 };
 
 const GENERATORS: Record<string, string> = {
-  menthe: `<ellipse cx="50" cy="90" rx="30" ry="5" fill="#000" opacity=".18"/><path d="M28 58 L72 58 L66 88 L34 88Z" fill="#c8693a" stroke="#8a4220" stroke-width="2"/><rect x="25" y="54" width="50" height="8" rx="3" fill="#d97b48" stroke="#8a4220" stroke-width="2"/>` +
+  menthe: `<path d="M28 58 L72 58 L66 88 L34 88Z" fill="#c8693a" stroke="#8a4220" stroke-width="2"/><rect x="25" y="54" width="50" height="8" rx="3" fill="#d97b48" stroke="#8a4220" stroke-width="2"/>` +
     leaf(50, 54, -150) + leaf(50, 54, -30) + leaf(46, 40, -130) + leaf(54, 40, -50) + leaf(50, 30, -90, '#4fb06a') + leaf(36, 50, -170) + leaf(64, 50, -10),
-  pain: `<ellipse cx="50" cy="90" rx="36" ry="5" fill="#000" opacity=".18"/><path d="M14 88 Q14 22 50 22 Q86 22 86 88Z" fill="#d9a066" stroke="#8a5a2c" stroke-width="2"/><path d="M34 88 Q34 58 50 58 Q66 58 66 88Z" fill="#3b2412"/><path d="M38 88 Q40 68 50 70 Q60 68 62 88Z" fill="#f39c12"/><path d="M44 88 Q46 76 50 78 Q54 76 56 88Z" fill="#f7dc6f"/><path d="M26 44 Q50 30 74 44" stroke="#b07a44" stroke-width="2" fill="none"/>`,
-  couture: `<ellipse cx="50" cy="90" rx="36" ry="5" fill="#000" opacity=".18"/><rect x="14" y="44" width="72" height="44" rx="4" fill="#8e5a2b" stroke="#5a3616" stroke-width="2"/><path d="M14 44 Q14 24 50 24 Q86 24 86 44Z" fill="#a46a34" stroke="#5a3616" stroke-width="2"/><path d="M14 56 L86 56" stroke="#d4a24c" stroke-width="4"/><rect x="44" y="50" width="12" height="14" rx="2" fill="#d4a24c" stroke="#9a7128" stroke-width="1.5"/><path d="M30 24 L30 88 M70 24 L70 88" stroke="#d4a24c" stroke-width="3"/>`,
+  pain: `<path d="M14 88 Q14 22 50 22 Q86 22 86 88Z" fill="#d9a066" stroke="#8a5a2c" stroke-width="2"/><path d="M34 88 Q34 58 50 58 Q66 58 66 88Z" fill="#3b2412"/><path d="M38 88 Q40 68 50 70 Q60 68 62 88Z" fill="#f39c12"/><path d="M44 88 Q46 76 50 78 Q54 76 56 88Z" fill="#f7dc6f"/><path d="M26 44 Q50 30 74 44" stroke="#b07a44" stroke-width="2" fill="none"/>`,
+  couture: `<rect x="14" y="44" width="72" height="44" rx="4" fill="#8e5a2b" stroke="#5a3616" stroke-width="2"/><path d="M14 44 Q14 24 50 24 Q86 24 86 44Z" fill="#a46a34" stroke="#5a3616" stroke-width="2"/><path d="M14 56 L86 56" stroke="#d4a24c" stroke-width="4"/><rect x="44" y="50" width="12" height="14" rx="2" fill="#d4a24c" stroke="#9a7128" stroke-width="1.5"/><path d="M30 24 L30 88 M70 24 L70 88" stroke="#d4a24c" stroke-width="3"/>`,
 };
 
 const ICONS: Record<string, string> = {
@@ -86,8 +100,43 @@ const ZELLIGE = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120
     `<g transform="translate(${x} ${y})"><rect x="-22" y="-22" width="44" height="44" fill="#f3e9d2"/><rect x="-22" y="-22" width="44" height="44" fill="#f3e9d2" transform="rotate(45)"/><circle r="12" fill="#1f8a70"/><circle r="5" fill="#d4a24c"/></g>`).join('') +
   [[60, 0], [0, 60], [120, 60], [60, 120]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#c0392b"/>`).join('') + `</svg>`;
 
+// Interface pieces with their own sizes (board tiles, cards, buttons).
+const raw = (w: number, h: number, body: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
+
+const UI: Record<string, string> = {
+  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf3e2"/><stop offset="1" stop-color="#ead7b0"/></linearGradient></defs>
+    <rect x="4" y="6" width="88" height="88" rx="14" fill="#b58a52"/><rect x="4" y="3" width="88" height="86" rx="14" fill="url(#t)"/>
+    <rect x="6" y="5" width="84" height="20" rx="10" fill="#fff" opacity=".45"/>`),
+  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e6c6"/><stop offset="1" stop-color="#dcc497"/></linearGradient></defs>
+    <rect x="4" y="6" width="88" height="88" rx="14" fill="#a87c45"/><rect x="4" y="3" width="88" height="86" rx="14" fill="url(#t)"/>
+    <rect x="6" y="5" width="84" height="20" rx="10" fill="#fff" opacity=".35"/>`),
+  card: raw(220, 228, `<defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6332"/><stop offset="1" stop-color="#6b3f1d"/></linearGradient>
+    <linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f1e1bf"/></linearGradient></defs>
+    <rect x="2" y="8" width="216" height="218" rx="22" fill="#000" opacity=".25"/><rect x="0" y="0" width="220" height="220" rx="22" fill="url(#w)"/>
+    <rect x="3" y="2" width="214" height="30" rx="16" fill="#fff" opacity=".18"/><rect x="9" y="9" width="202" height="202" rx="16" fill="url(#p)"/>
+    <path d="M110 16 l6 6 -6 6 -6 -6Z" fill="#d4a24c"/>` + [[16, 16], [204, 16], [16, 204], [204, 204]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#e8bf62" stroke="#8a5a22" stroke-width="1.5"/>`).join('')),
+  btnGreen: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd38a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
+    <rect x="0" y="6" width="192" height="48" rx="16" fill="#146b38"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".35"/>`),
+  btnGrey: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9cdb8"/><stop offset="1" stop-color="#b3a58c"/></linearGradient></defs>
+    <rect x="0" y="6" width="192" height="48" rx="16" fill="#8c7e66"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".3"/>`),
+  pill: raw(230, 60, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4a78"/><stop offset="1" stop-color="#0f2c4b"/></linearGradient></defs>
+    <rect x="2" y="2" width="226" height="56" rx="28" fill="url(#g)" stroke="#e8bf62" stroke-width="3"/><rect x="14" y="6" width="202" height="14" rx="7" fill="#fff" opacity=".12"/>`),
+  sparkle: raw(32, 32, `<path d="M16 0 L19 13 L32 16 L19 19 L16 32 L13 19 L0 16 L13 13Z" fill="#fff6c8"/><circle cx="16" cy="16" r="4" fill="#fff"/>`),
+  glow: raw(128, 128, `<defs><radialGradient id="r"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="64" fill="url(#r)"/>`),
+};
+
+// Riad courtyard behind the game: sky, horseshoe arches, zellige wainscot.
+const COURTYARD = raw(720, 1280, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc4e8"/><stop offset="1" stop-color="#d9eef7"/></linearGradient>
+  <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1d9b5"/><stop offset="1" stop-color="#d9b48a"/></linearGradient>
+  <pattern id="z" width="60" height="60" patternUnits="userSpaceOnUse"><rect width="60" height="60" fill="#24507e"/><rect x="15" y="15" width="30" height="30" fill="#f3e9d2"/><rect x="15" y="15" width="30" height="30" fill="#f3e9d2" transform="rotate(45 30 30)"/><circle cx="30" cy="30" r="8" fill="#1f8a70"/><circle cx="0" cy="0" r="7" fill="#c0392b"/><circle cx="60" cy="60" r="7" fill="#c0392b"/><circle cx="60" cy="0" r="7" fill="#c0392b"/><circle cx="0" cy="60" r="7" fill="#c0392b"/></pattern></defs>
+  <rect width="720" height="1280" fill="url(#sky)"/><rect y="70" width="720" height="1210" fill="url(#wall)"/>` +
+  [0, 1, 2, 3].map((i) => { const x = 20 + i * 175; return `<path d="M${x} 1280 L${x} 260 Q${x} 150 ${x + 70} 140 Q${x + 140} 150 ${x + 140} 260 L${x + 140} 1280Z" fill="#c99a68"/><path d="M${x + 12} 1280 L${x + 12} 262 Q${x + 12} 166 ${x + 70} 156 Q${x + 128} 166 ${x + 128} 262 L${x + 128} 1280Z" fill="#3c6e8f" opacity=".55"/>`; }).join('') +
+  `<rect y="1000" width="720" height="280" fill="url(#z)" opacity=".9"/><rect y="992" width="720" height="10" fill="#d4a24c"/>`);
+
 export function artEntries(): [string, string][] {
-  const out: [string, string][] = [['zellige', ZELLIGE]];
+  const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD]];
+  for (const [k, b] of Object.entries(UI)) out.push([k, b]);
   for (const [chain, list] of Object.entries(ITEMS)) list.forEach((b, i) => out.push([`${chain}-${i + 1}`, svg(b)]));
   for (const [chain, b] of Object.entries(GENERATORS)) out.push([`gen-${chain}`, svg(b)]);
   for (const [k, b] of Object.entries(ICONS)) out.push([`icon-${k}`, svg(b, 64)]);
