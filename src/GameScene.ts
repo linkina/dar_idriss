@@ -33,7 +33,7 @@ export class GameScene extends Phaser.Scene {
   private dragging = false;
   private glows: Phaser.GameObjects.Image[] = [];
   private genDecor: Phaser.GameObjects.GameObject[] = [];
-  private selRays!: Phaser.GameObjects.Image;
+  private selFrame!: Phaser.GameObjects.Container;
   private busts: Phaser.GameObjects.Image[] = [];
   private arches: Phaser.GameObjects.Image[] = [];
   private halos: Phaser.GameObjects.Container[] = [];
@@ -55,9 +55,22 @@ export class GameScene extends Phaser.Scene {
     this.orderLayer = this.add.container(0, 0);
     this.drawBoardFrame();
     this.selection = this.add.graphics().setDepth(5);
-    // Golden sunburst that turns slowly behind the selected object.
-    this.selRays = this.add.image(0, 0, 'rays').setDisplaySize(CELL * 1.9, CELL * 1.9).setDepth(1.5).setVisible(false);
-    this.tweens.add({ targets: this.selRays, angle: 360, duration: 9000, repeat: -1 });
+    // Photo-frame corners around the selected object, gently pulsing.
+    const corners = this.add.graphics();
+    const h = CELL / 2 - 2;
+    const len = 22;
+    for (const [color, width] of [[0x1b3a5c, 11], [0xffd21f, 6]] as const) {
+      corners.lineStyle(width, color, 1);
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        corners.beginPath();
+        corners.moveTo(sx * h, sy * (h - len));
+        corners.lineTo(sx * h, sy * h);
+        corners.lineTo(sx * (h - len), sy * h);
+        corners.strokePath();
+      }
+    }
+    this.selFrame = this.add.container(0, 0, [corners]).setDepth(6).setVisible(false);
+    this.tweens.add({ targets: this.selFrame, scale: 1.08, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     this.sparkles = this.add.particles(0, 0, 'sparkle', {
       speed: { min: 120, max: 320 }, angle: { min: 0, max: 360 }, scale: { start: 0.9, end: 0 },
       lifespan: 650, gravityY: 300, rotate: { min: 0, max: 360 }, emitting: false,
@@ -194,11 +207,10 @@ export class GameScene extends Phaser.Scene {
 
   private drawSelection() {
     this.selection.clear();
-    this.selRays.setVisible(false);
+    this.selFrame.setVisible(false);
     if (this.selected < 0 || !this.s.board[this.selected]) return;
     const { x, y } = this.cellCenter(this.selected);
-    this.selRays.setPosition(x, y).setVisible(true);
-    this.selection.lineStyle(4, 0xffc21a, 1).strokeRoundedRect(x - CELL / 2 + 4, y - CELL / 2 + 2, CELL - 8, CELL - 10, 16);
+    this.selFrame.setPosition(x, y - 1).setVisible(true);
   }
 
   private pop(i: number) {
