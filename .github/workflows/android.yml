@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# A newer push replaces a build still running.
+concurrency:
+  group: apk
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-latest
