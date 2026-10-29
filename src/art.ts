@@ -134,8 +134,8 @@ const ICONS: Record<string, string> = {
 };
 
 // Portraits: women wear a veil and caftan, men a jellaba (hood) or tarbouche.
-interface Look { glasses?: boolean; bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; long?: boolean; pigtails?: boolean; trim: string }
-const LOOKS: Record<string, Look> = {
+export interface Look { glasses?: boolean; bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; long?: boolean; pigtails?: boolean; trim: string }
+export const LOOKS: Record<string, Look> = {
   idriss: { bg: '#2e6fa8', robe: '#f5f0e6', hood: '#d9c49c', hair: '#2b1a10', beard: true, trim: '#d4a24c' },
   sarah: { bg: '#8e44ad', robe: '#1f8a70', veil: '#e79bb5', trim: '#f1c40f' },
   fatima: { glasses: true, bg: '#c0392b', robe: '#6c3483', veil: '#f5f0e6', trim: '#d4a24c' },
@@ -182,7 +182,7 @@ function portrait(l: Look, mode: 'face' | 'bust' | 'happy' = 'face'): string {
 
 // Half-body character for the counter, in a soft chibi cartoon style:
 // big round head, large shiny eyes, flat colours with gentle shading.
-function bust(l: Look, happy: boolean): string {
+export function bust(l: Look, happy: boolean): string {
   const k = l.child ? 0.88 : 1;
   const line = '#6b4a35';
   const skin = '#f5cfa8';
@@ -235,7 +235,7 @@ const ZELLIGE = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120
   [[60, 0], [0, 60], [120, 60], [60, 120]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#c0392b"/>`).join('') + `</svg>`;
 
 // Interface pieces with their own sizes (board tiles, cards, buttons).
-const raw = (w: number, h: number, body: string) =>
+export const raw = (w: number, h: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
 
 const UI: Record<string, string> = {
@@ -281,33 +281,6 @@ const COURTYARD = raw(720, H, `<defs><linearGradient id="sky" x1="0" y1="0" x2="
     <g transform="translate(60 60)" opacity=".18"><path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6Z" fill="#fff3d6"/><rect x="-11" y="-11" width="22" height="22" fill="none" stroke="#fff3d6" stroke-width="2" transform="rotate(45)"/></g></pattern></defs>
   <rect width="720" height="${H}" fill="url(#sky)"/><rect width="720" height="${H}" fill="url(#t)"/>`);
 
-// Riad rooms: a bare base per zone and one layer per renovation task.
-const R = (body: string) => raw(640, 440, body);
-const lantern = (x: number) => `<path d="M${x} 0 L${x} 60" stroke="#5a3616" stroke-width="3"/><circle cx="${x}" cy="105" r="48" fill="#fff3b0" opacity=".35"/><path d="M${x - 18} 70 L${x + 18} 70 L${x + 24} 130 L${x - 24} 130Z" fill="#f7dc6f" stroke="#f0802a" stroke-width="5"/><path d="M${x - 22} 70 L${x + 22} 70 L${x + 12} 58 L${x - 12} 58Z M${x - 26} 130 L${x + 26} 130 L${x + 14} 144 L${x - 14} 144Z" fill="#f0802a"/>`;
-const jar = (x: number) => `<path d="M${x - 34} 330 Q${x - 44} 420 ${x} 424 Q${x + 44} 420 ${x + 34} 330Z" fill="#c8693a" stroke="#8a4220" stroke-width="3"/><rect x="${x - 38}" y="320" width="76" height="16" rx="6" fill="#d97b48"/>` + [[-22, 300, '#e74c3c'], [0, 288, '#f1c40f'], [22, 300, '#e79bb5'], [-10, 306, '#e74c3c'], [12, 304, '#fff']].map(([dx, y, c]) => `<circle cx="${x + (dx as number)}" cy="${y}" r="13" fill="${c}"/>`).join('') + `<path d="M${x - 30} 318 Q${x - 20} 296 ${x - 8} 316 M${x + 30} 318 Q${x + 20} 296 ${x + 8} 316" stroke="#3f9b5a" stroke-width="6" fill="none"/>`;
-const tree = (x: number) => `<path d="M${x - 34} 360 L${x + 34} 360 L${x + 26} 420 L${x - 26} 420Z" fill="#c8693a"/><path d="M${x} 360 L${x} 280" stroke="#6b4423" stroke-width="12"/><circle cx="${x}" cy="240" r="70" fill="#3f9b5a"/><circle cx="${x - 26}" cy="218" r="32" fill="#4fb06a"/>` + [[-30, 250], [20, 210], [36, 262], [-8, 280], [-40, 206]].map(([dx, y]) => `<circle cx="${x + dx}" cy="${y}" r="11" fill="#f39c12"/>`).join('');
-
-const ROOMS: Record<string, string> = {
-  'entree-base': R(`<rect width="640" height="440" fill="#e6cfa8"/><rect y="380" width="640" height="60" fill="#c9ad7c"/><path d="M0 120 L120 140 M520 60 L600 90 L640 80 M80 300 L140 330" stroke="#b39368" stroke-width="3" fill="none"/>
-    <path d="M190 380 L190 170 Q190 70 320 60 Q450 70 450 170 L450 380Z" fill="#c99a68"/><path d="M215 380 L215 175 Q215 92 320 84 Q425 92 425 175 L425 380Z" fill="#4a3a2c"/>
-    <path d="M230 380 L238 180 L300 176 L296 380Z" fill="#7d6a58" transform="rotate(-4 260 280)"/><path d="M330 380 L336 190 L400 196 L392 380Z" fill="#6e5c4a" transform="rotate(5 360 280)"/>`),
-  'entree-porte': R(`<path d="M215 380 L215 175 Q215 92 320 84 Q425 92 425 175 L425 380Z" fill="#1f8a70"/><path d="M320 86 L320 380" stroke="#145a49" stroke-width="5"/><path d="M240 380 L240 180 Q240 112 320 106 Q400 112 400 180 L400 380" stroke="#f4c430" stroke-width="5" fill="none"/>` +
-    [140, 200, 260, 320].map((y) => [255, 290, 350, 385].map((x) => `<circle cx="${x}" cy="${y}" r="5" fill="#f4c430"/>`).join('')).join('') + `<circle cx="340" cy="250" r="10" fill="#f4c430" stroke="#9a7128" stroke-width="3"/><path d="M320 120 l14 14 -14 14 -14 -14Z" fill="#f4c430"/>`),
-  'entree-lanternes': R(lantern(120) + lantern(520)),
-  'entree-jarres': R(jar(110) + jar(530)),
-  'entree-tapis': R(`<path d="M250 380 L390 380 L470 440 L170 440Z" fill="#c0392b"/><path d="M262 386 L378 386 L446 436 L194 436Z" fill="none" stroke="#f4c430" stroke-width="4"/><path d="M320 392 L346 412 L320 432 L294 412Z" fill="#2e6fa8" stroke="#f4c430" stroke-width="3"/>`),
-  'patio-base': R(`<rect width="640" height="440" fill="#e8d5b5"/><rect y="250" width="640" height="190" fill="#cbb08a"/>` + [60, 230, 400].map((x) => `<path d="M${x} 250 L${x} 80 Q${x} 30 ${x + 90} 26 Q${x + 180} 30 ${x + 180} 80 L${x + 180} 250Z" fill="#d9bf98"/>`).join('') +
-    `<ellipse cx="320" cy="340" rx="130" ry="40" fill="#9e8a6e"/><ellipse cx="320" cy="334" rx="112" ry="30" fill="#7d6c56"/><path d="M290 334 L300 270 L340 270 L350 334Z" fill="#9e8a6e"/><path d="M250 330 L280 350 L270 370" stroke="#5a4a38" stroke-width="3" fill="none"/>`),
-  'patio-zellige': R(`<rect y="250" width="640" height="190" fill="#24507e"/>` + Array.from({ length: 11 }, (_, i) => Array.from({ length: 4 }, (_, j) => { const x = i * 64; const y = 268 + j * 48; return `<path d="M${x} ${y} l14 -14 14 14 -14 14Z M${x + 32} ${y + 24} l14 -14 14 14 -14 14Z" fill="${(i + j) % 2 ? '#f3e9d2' : '#1f8a70'}"/><circle cx="${x + 46}" cy="${y}" r="5" fill="#c0392b"/>`; }).join('')).join('') + `<rect y="246" width="640" height="8" fill="#d4a24c"/>`),
-  'patio-fontaine': R(`<ellipse cx="320" cy="340" rx="130" ry="40" fill="#f3e9d2" stroke="#1f8a70" stroke-width="6"/><ellipse cx="320" cy="334" rx="112" ry="30" fill="#5dade2"/><path d="M290 334 L300 266 L340 266 L350 334Z" fill="#f3e9d2" stroke="#1f8a70" stroke-width="4"/><ellipse cx="320" cy="264" rx="44" ry="12" fill="#f3e9d2" stroke="#1f8a70" stroke-width="4"/><path d="M320 252 Q300 200 270 250 M320 252 Q340 200 370 250 M320 252 L320 200" stroke="#aee3f7" stroke-width="5" fill="none"/>`),
-  'patio-orangers': R(tree(80) + tree(560)),
-  'patio-banquettes': R(`<rect x="150" y="380" width="120" height="34" rx="10" fill="#8e5a2b"/><rect x="150" y="368" width="120" height="20" rx="8" fill="#c0392b"/><rect x="370" y="380" width="120" height="34" rx="10" fill="#8e5a2b"/><rect x="370" y="368" width="120" height="20" rx="8" fill="#2e6fa8"/>`),
-  'salon-base': R(`<rect width="640" height="440" fill="#ead8b8"/><rect y="340" width="640" height="100" fill="#b58a52"/><path d="M250 260 L250 120 Q250 60 320 56 Q390 60 390 120 L390 260Z" fill="#9fdcef"/><path d="M250 260 L250 120 Q250 60 320 56 Q390 60 390 120 L390 260" stroke="#c99a68" stroke-width="10" fill="none"/><path d="M60 80 L110 120 M520 100 L580 140" stroke="#c9b08a" stroke-width="3"/>`),
-  'salon-sedari': R(`<rect x="20" y="290" width="600" height="70" rx="14" fill="#6c3483"/><rect x="20" y="280" width="600" height="26" rx="10" fill="#8e44ad"/><path d="M20 340 L620 340" stroke="#f4c430" stroke-width="5"/>`),
-  'salon-lustre': R(`<path d="M320 0 L320 60" stroke="#b4501a" stroke-width="4"/><circle cx="320" cy="110" r="90" fill="#fff3b0" opacity=".3"/><path d="M270 70 Q320 50 370 70 L380 100 L260 100Z" fill="#f0802a"/>` + [250, 285, 320, 355, 390].map((x) => `<path d="M${x} 100 L${x} 120" stroke="#b4501a" stroke-width="3"/><path d="M${x - 10} 120 L${x + 10} 120 L${x + 7} 150 L${x - 7} 150Z" fill="#f7dc6f" stroke="#f0802a" stroke-width="3"/>`).join('')),
-  'salon-coussins': R([60, 160, 260, 360, 460, 560].map((x, i) => `<rect x="${x - 34}" y="250" width="68" height="50" rx="14" fill="${['#e74c3c', '#f1c40f', '#1f8a70', '#2e6fa8', '#e67e22', '#e79bb5'][i]}"/><path d="M${x} 258 L${x + 10} 275 L${x} 292 L${x - 10} 275Z" fill="#fff" opacity=".7"/>`).join('')),
-  'salon-table': R(`<ellipse cx="320" cy="400" rx="130" ry="26" fill="#b4501a"/><ellipse cx="320" cy="392" rx="130" ry="26" fill="#f0802a"/><ellipse cx="320" cy="390" rx="104" ry="18" fill="#e08e4a"/><path d="M300 386 Q298 350 320 346 Q342 350 340 386Z" fill="#cfd5dc" stroke="#7d8793" stroke-width="3"/><path d="M340 368 Q356 362 358 348" stroke="#7d8793" stroke-width="4" fill="none"/>` + [250, 274, 366, 390].map((x) => `<path d="M${x - 8} 388 L${x + 8} 388 L${x + 6} 370 L${x - 6} 370Z" fill="#f3c86b" stroke="#b8862f" stroke-width="2"/>`).join('')),
-};
 
 // One arch per character, each with its own light background colour.
 const ARCH_COLORS: Record<string, [string, string]> = {
@@ -337,7 +310,6 @@ export function artEntries(): [string, string][] {
   const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD], ['appIcon', APP_ICON]];
   for (const [k, b] of Object.entries(UI)) out.push([k, b]);
   for (const [k, c] of Object.entries(ARCH_COLORS)) out.push([`arch-${k}`, arch(c)]);
-  for (const [k, b] of Object.entries(ROOMS)) out.push([`room-${k}`, b]);
   for (const [chain, list] of Object.entries(ITEMS)) list.forEach((b, i) => out.push([`${chain}-${i + 1}`, svg(b)]));
   for (const [chain, b] of Object.entries(GENERATORS)) out.push([`gen-${chain}`, svg(b)]);
   for (const [k, b] of Object.entries(ICONS)) out.push([`icon-${k}`, svg(b, 64)]);

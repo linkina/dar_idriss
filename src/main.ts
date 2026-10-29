@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { artEntries } from './art';
+import { riadEntries } from './riadArt';
 import { GameScene } from './GameScene';
 import { ChainScene } from './ChainScene';
 import { RiadScene } from './RiadScene';
@@ -14,7 +15,7 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    const jobs = artEntries().map(
+    const jobs = [...artEntries(), ...riadEntries()].map(
       ([key, svg]) =>
         new Promise<void>((resolve) => {
           const img = new Image();
