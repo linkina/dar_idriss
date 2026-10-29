@@ -8,7 +8,7 @@ const CELL = 96;
 const BOARD_X = (W - COLS * CELL) / 2;
 const BOARD_Y = 352;
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
-const INK = '#3b2412';
+const INK = '#1b3a5c';
 
 const texKey = (c: NonNullable<Cell>) => (c.kind === 'gen' ? `gen-${c.chain}` : `${c.chain}-${c.level}`);
 const cellName = (c: NonNullable<Cell>) => (c.kind === 'gen' ? CHAINS[c.chain].generator : CHAINS[c.chain].items[c.level - 1]);
@@ -28,6 +28,9 @@ export class GameScene extends Phaser.Scene {
   private soundIcon!: Phaser.GameObjects.Image;
   private orderLayer!: Phaser.GameObjects.Container;
   private dragging = false;
+  private glows: Phaser.GameObjects.Image[] = [];
+  private selRays!: Phaser.GameObjects.Image;
+  private busts: Phaser.GameObjects.Image[] = [];
 
   constructor() {
     super('game');
@@ -42,17 +45,21 @@ export class GameScene extends Phaser.Scene {
 
     this.add.image(0, 0, 'courtyard').setOrigin(0);
     this.drawTopBar();
+    this.drawCharacters();
     this.orderLayer = this.add.container(0, 0);
     this.drawBoardFrame();
     this.selection = this.add.graphics().setDepth(5);
+    // Golden sunburst that turns slowly behind the selected object.
+    this.selRays = this.add.image(0, 0, 'rays').setDisplaySize(CELL * 1.9, CELL * 1.9).setDepth(1.5).setVisible(false);
+    this.tweens.add({ targets: this.selRays, angle: 360, duration: 9000, repeat: -1 });
     this.sparkles = this.add.particles(0, 0, 'sparkle', {
       speed: { min: 120, max: 320 }, angle: { min: 0, max: 360 }, scale: { start: 0.9, end: 0 },
       lifespan: 650, gravityY: 300, rotate: { min: 0, max: 360 }, emitting: false,
     }).setDepth(15);
 
-    this.add.rectangle(0, 1226, W, 54, 0x173a5e, 0.94).setOrigin(0);
-    this.add.rectangle(0, 1226, W, 3, 0xd4a24c).setOrigin(0);
-    this.info = this.add.text(W / 2, 1253, '', { fontFamily: FONT, fontSize: '20px', color: '#f3e9d2', align: 'center', wordWrap: { width: W - 32 } }).setOrigin(0.5);
+    this.add.rectangle(0, 1226, W, 54, 0xffffff, 0.85).setOrigin(0);
+    this.add.rectangle(0, 1226, W, 3, 0x3cb4e0).setOrigin(0);
+    this.info = this.add.text(W / 2, 1253, '', { fontFamily: FONT, fontSize: '20px', color: INK, align: 'center', wordWrap: { width: W - 32 } }).setOrigin(0.5);
     this.say('Bienvenue à Dar Idriss ! Touche le jardin de menthe pour faire pousser une feuille.');
 
     this.renderBoard();
@@ -64,21 +71,20 @@ export class GameScene extends Phaser.Scene {
   // ---------- Drawing ----------
 
   private drawTopBar() {
-    this.add.tileSprite(0, 0, W, 92, 'zellige').setOrigin(0);
-    this.add.rectangle(0, 0, W, 92, 0x0f2c4b, 0.55).setOrigin(0);
-    this.add.rectangle(0, 92, W, 5, 0xd4a24c).setOrigin(0);
     const pill = (x: number, w: number) => this.add.image(x, 46, 'pill').setOrigin(0, 0.5).setDisplaySize(w, 60);
     pill(16, 230);
     pill(262, 180);
     pill(458, 150);
     this.add.image(46, 46, 'icon-energy').setDisplaySize(44, 44);
-    this.energyText = this.add.text(74, 30, '', { fontFamily: FONT, fontSize: '28px', color: '#fff', fontStyle: 'bold' });
-    this.timerText = this.add.text(152, 36, '', { fontFamily: FONT, fontSize: '18px', color: '#f4c430' });
+    this.energyText = this.add.text(74, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
+    this.timerText = this.add.text(152, 36, '', { fontFamily: FONT, fontSize: '18px', color: '#2a7fb8', fontStyle: 'bold' });
     this.add.image(292, 46, 'icon-coin').setDisplaySize(42, 42);
-    this.coinText = this.add.text(322, 30, '', { fontFamily: FONT, fontSize: '28px', color: '#fff', fontStyle: 'bold' });
+    this.coinText = this.add.text(322, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
     this.add.image(488, 46, 'icon-star').setDisplaySize(42, 42);
-    this.starText = this.add.text(518, 30, '', { fontFamily: FONT, fontSize: '28px', color: '#fff', fontStyle: 'bold' });
-    this.soundIcon = this.add.image(668, 46, this.s.sound ? 'icon-soundOn' : 'icon-soundOff').setDisplaySize(44, 44).setInteractive({ useHandCursor: true });
+    this.starText = this.add.text(518, 30, '', { fontFamily: FONT, fontSize: '28px', color: INK, fontStyle: 'bold' });
+    this.add.circle(668, 49, 30, 0x2a7fb8, 0.4);
+    this.add.circle(668, 46, 30, 0x3cb4e0).setStrokeStyle(3, 0xffffff);
+    this.soundIcon = this.add.image(668, 46, this.s.sound ? 'icon-soundOn' : 'icon-soundOff').setDisplaySize(36, 36).setInteractive({ useHandCursor: true });
     this.soundIcon.on('pointerup', () => {
       this.s.sound = !this.s.sound;
       this.sfx.start();
@@ -90,20 +96,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawBoardFrame() {
-    // Carved cedar frame with brass studs, then raised tiles.
+    // Soft white panel with a turquoise rim, then raised tiles.
     const g = this.add.graphics();
-    const fw = COLS * CELL + 28;
-    const fh = ROWS * CELL + 28;
-    g.fillStyle(0x000000, 0.3).fillRoundedRect(BOARD_X - 14, BOARD_Y - 6, fw, fh, 22);
-    g.fillStyle(0x6b3f1d, 1).fillRoundedRect(BOARD_X - 14, BOARD_Y - 14, fw, fh, 22);
-    g.fillStyle(0x9a6332, 1).fillRoundedRect(BOARD_X - 10, BOARD_Y - 12, fw - 8, fh - 8, 19);
-    g.fillStyle(0xc89a62, 0.6).fillRoundedRect(BOARD_X - 6, BOARD_Y - 11, fw - 16, 8, 4);
-    g.fillStyle(0x5a3616, 1).fillRoundedRect(BOARD_X - 4, BOARD_Y - 4, COLS * CELL + 8, ROWS * CELL + 8, 12);
-    for (const [cx, cy] of [[BOARD_X - 6, BOARD_Y - 6], [BOARD_X + COLS * CELL + 6, BOARD_Y - 6], [BOARD_X - 6, BOARD_Y + ROWS * CELL + 6], [BOARD_X + COLS * CELL + 6, BOARD_Y + ROWS * CELL + 6]]) {
-      g.fillStyle(0x8a5a22, 1).fillCircle(cx, cy + 1, 8);
-      g.fillStyle(0xe8bf62, 1).fillCircle(cx, cy, 7);
-      g.fillStyle(0xfff3c4, 1).fillCircle(cx - 2, cy - 2, 2.5);
-    }
+    const fw = COLS * CELL + 24;
+    const fh = ROWS * CELL + 24;
+    g.fillStyle(0x2a7fb8, 0.3).fillRoundedRect(BOARD_X - 12, BOARD_Y - 6, fw, fh, 26);
+    g.fillStyle(0x3cb4e0, 1).fillRoundedRect(BOARD_X - 12, BOARD_Y - 12, fw, fh, 26);
+    g.fillStyle(0xffffff, 0.75).fillRoundedRect(BOARD_X - 7, BOARD_Y - 7, fw - 10, fh - 10, 22);
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         this.add.image(BOARD_X + c * CELL, BOARD_Y + r * CELL, (r + c) % 2 ? 'tile' : 'tileAlt').setOrigin(0);
@@ -126,11 +125,12 @@ export class GameScene extends Phaser.Scene {
     this.sprites.forEach((sp) => sp?.destroy());
     this.sprites = this.s.board.map((cell, i) => (cell ? this.makeSprite(cell, i) : null));
     this.drawSelection();
+    this.drawGlows();
   }
 
   private makeSprite(cell: NonNullable<Cell>, i: number) {
     const { x, y } = this.cellCenter(i);
-    const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(CELL - 8, CELL - 8).setDepth(2);
+    const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(CELL + 2, CELL + 2).setDepth(2);
     if (cell.kind === 'gen') {
       // Generators breathe gently so the player sees they can be tapped.
       this.tweens.add({ targets: sp, scaleY: sp.scaleY * 1.05, scaleX: sp.scaleX * 0.97, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut', delay: i * 37 });
@@ -143,7 +143,7 @@ export class GameScene extends Phaser.Scene {
     sp.on('dragstart', () => {
       this.dragging = true;
       this.tweens.killTweensOf(sp);
-      sp.setDepth(10).setDisplaySize(CELL + 10, CELL + 10);
+      sp.setDepth(10).setDisplaySize(CELL + 16, CELL + 16);
       this.sfx.tap();
     });
     sp.on('drag', (_p: Phaser.Input.Pointer, dx: number, dy: number) => sp.setPosition(dx, dy));
@@ -154,19 +154,37 @@ export class GameScene extends Phaser.Scene {
     return sp;
   }
 
+  // Green halo under every object that a character is asking for.
+  private drawGlows() {
+    this.glows.forEach((g) => g.destroy());
+    this.glows = [];
+    this.s.board.forEach((c, i) => {
+      if (c?.kind !== 'item') return;
+      const wanted = this.s.orders.some((o) => o.wants.some((w) => w.chain === c.chain && w.level === c.level));
+      if (!wanted) return;
+      const { x, y } = this.cellCenter(i);
+      const g = this.add.image(x, y - 2, 'glowGreen').setDisplaySize(CELL - 2, CELL - 2).setDepth(1);
+      this.tweens.add({ targets: g, alpha: 0.5, duration: 750, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      this.glows.push(g);
+    });
+  }
+
   private drawSelection() {
     this.selection.clear();
+    this.selRays.setVisible(false);
     if (this.selected < 0 || !this.s.board[this.selected]) return;
     const { x, y } = this.cellCenter(this.selected);
-    this.selection.lineStyle(10, 0xfff3b0, 0.35).strokeRoundedRect(x - CELL / 2 + 2, y - CELL / 2, CELL - 4, CELL - 6, 16);
-    this.selection.lineStyle(4, 0xf1c40f, 1).strokeRoundedRect(x - CELL / 2 + 4, y - CELL / 2 + 2, CELL - 8, CELL - 10, 14);
+    this.selRays.setPosition(x, y).setVisible(true);
+    this.selection.lineStyle(4, 0xffc21a, 1).strokeRoundedRect(x - CELL / 2 + 4, y - CELL / 2 + 2, CELL - 8, CELL - 10, 16);
   }
 
   private pop(i: number) {
     const sp = this.sprites[i];
     if (!sp) return;
-    const size = CELL - 8;
+    const size = CELL + 2;
     sp.setDisplaySize(size * 0.4, size * 0.4);
+    const burst = this.add.image(sp.x, sp.y, 'rays').setDepth(1.6).setDisplaySize(CELL, CELL);
+    this.tweens.add({ targets: burst, displayWidth: CELL * 3, displayHeight: CELL * 3, angle: 90, alpha: 0, duration: 700, ease: 'Cubic.Out', onComplete: () => burst.destroy() });
     this.tweens.add({ targets: sp, displayWidth: size, displayHeight: size, duration: 320, ease: 'Back.Out' });
     const glow = this.add.image(sp.x, sp.y, 'glow').setDepth(1).setScale(0.3).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: glow, scale: 1.4, alpha: 0, duration: 500, ease: 'Cubic.Out', onComplete: () => glow.destroy() });
@@ -225,7 +243,7 @@ export class GameScene extends Phaser.Scene {
         const k = tw.getValue() ?? 1;
         sp.x = from.x + (to.x - from.x) * k;
         sp.y = (1 - k) * (1 - k) * from.y + 2 * (1 - k) * k * peak + k * k * (to.y - 2);
-        sp.setDisplaySize((CELL - 8) * (0.3 + 0.7 * k), (CELL - 8) * (0.3 + 0.7 * k));
+        sp.setDisplaySize((CELL + 2) * (0.3 + 0.7 * k), (CELL + 2) * (0.3 + 0.7 * k));
       },
     });
     this.say(`${CHAINS[gen.chain].generator} : +1 ${CHAINS[gen.chain].items[0].toLowerCase()}. Glisse deux objets identiques l'un sur l'autre pour les fusionner.`);
@@ -283,7 +301,10 @@ export class GameScene extends Phaser.Scene {
 
   private afterChange(rerender: boolean) {
     if (rerender) this.renderBoard();
-    else this.drawSelection();
+    else {
+      this.drawSelection();
+      this.drawGlows();
+    }
     save(this.s);
     this.renderOrders();
     this.refreshHud();
@@ -302,44 +323,57 @@ export class GameScene extends Phaser.Scene {
     return [...used];
   }
 
+  // Characters stand in arches above a counter; each keeps breathing.
+  private drawCharacters() {
+    const colW = W / 3;
+    for (let k = 0; k < 3; k++) {
+      const cx = colW * k + colW / 2;
+      this.add.image(cx, 100, 'arch').setOrigin(0.5, 0).setDisplaySize(220, 250);
+      const bust = this.add.image(cx, 296, `bust-${this.s.orders[k].who}`).setOrigin(0.5, 1).setDisplaySize(176, 176);
+      bust.setData('base', bust.scaleY);
+      this.busts.push(bust);
+      this.breathe(bust, k);
+    }
+  }
+
+  private breathe(bust: Phaser.GameObjects.Image, k: number) {
+    const base = bust.getData('base') as number;
+    bust.setScale(base);
+    this.tweens.add({ targets: bust, scaleY: base * 1.035, scaleX: base * 0.99, duration: 1400 + k * 170, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+  }
+
   private renderOrders() {
     this.orderLayer.removeAll(true);
-    const cardW = 220;
-    const gap = (W - 3 * cardW) / 4;
+    const colW = W / 3;
     this.s.orders.forEach((o, k) => {
-      const x = gap + k * (cardW + gap);
-      const y = 112;
+      const cx = colW * k + colW / 2;
       const ready = this.findItems(o) !== null;
       const who = CHARACTERS.find((c) => c.id === o.who)!;
-      if (ready) {
-        const halo = this.add.image(x + cardW / 2, y + 110, 'glow').setDisplaySize(cardW * 1.5, 300).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.6);
-        this.tweens.add({ targets: halo, alpha: 0.2, duration: 800, yoyo: true, repeat: -1 });
-        this.orderLayer.add(halo);
-      }
-      this.orderLayer.add(this.add.image(x, y, 'card').setOrigin(0).setDisplaySize(cardW, 228));
-      this.orderLayer.add(this.add.image(x + 52, y + 56, `face-${o.who}`).setDisplaySize(84, 84));
-      this.orderLayer.add(this.add.text(x + 52, y + 108, who.name, { fontFamily: FONT, fontSize: who.name.length > 8 ? '16px' : '20px', color: INK, fontStyle: 'bold' }).setOrigin(0.5, 0));
+      this.orderLayer.add(this.add.image(cx, 256, 'tray').setOrigin(0.5, 0).setDisplaySize(220, 96));
+      this.orderLayer.add(this.add.text(cx - 96, 266, who.name, { fontFamily: FONT, fontSize: '17px', color: '#2a7fb8', fontStyle: 'bold' }));
+      this.orderLayer.add(this.add.image(cx + 58, 276, 'icon-coin').setDisplaySize(22, 22));
+      this.orderLayer.add(this.add.text(cx + 72, 266, `+${o.coins}`, { fontFamily: FONT, fontSize: '17px', color: INK, fontStyle: 'bold' }));
 
       const used = new Set<number>();
       o.wants.forEach((w, n) => {
-        const ix = x + 152;
-        const iy = y + (o.wants.length === 1 ? 70 : 42 + n * 66);
-        this.orderLayer.add(this.add.circle(ix, iy + 2, 33, 0xb58a52));
-        this.orderLayer.add(this.add.circle(ix, iy, 33, 0xead7b0).setStrokeStyle(2, 0xc9a46a));
-        this.orderLayer.add(this.add.image(ix, iy, `${w.chain}-${w.level}`).setDisplaySize(56, 56));
+        const ix = cx + (o.wants.length === 1 ? 0 : n === 0 ? -40 : 40);
+        const iy = 312;
+        this.orderLayer.add(this.add.image(ix, iy, `${w.chain}-${w.level}`).setDisplaySize(62, 62));
         const have = this.s.board.findIndex((c, j) => !used.has(j) && c?.kind === 'item' && c.chain === w.chain && c.level === w.level);
         if (have >= 0) {
           used.add(have);
-          this.orderLayer.add(this.add.image(ix + 24, iy + 22, 'icon-check').setDisplaySize(24, 24));
+          this.orderLayer.add(this.add.image(ix + 24, iy + 18, 'icon-check').setDisplaySize(26, 26));
         }
       });
 
-      this.orderLayer.add(this.add.image(x + 16, y + 156, ready ? 'btnGreen' : 'btnGrey').setOrigin(0).setDisplaySize(cardW - 32, 52));
-      const label = ready ? 'Livrer' : `${o.coins}`;
-      const txt = this.add.text(x + cardW / 2 + (ready ? 0 : 14), y + 180, label, { fontFamily: FONT, fontSize: '24px', color: '#fff', fontStyle: 'bold', stroke: ready ? '#146b38' : '#8c7e66', strokeThickness: 4 }).setOrigin(0.5);
-      this.orderLayer.add(txt);
-      if (!ready) this.orderLayer.add(this.add.image(x + cardW / 2 - 22, y + 180, 'icon-coin').setDisplaySize(30, 30));
-      const hit = this.add.zone(x, y, cardW, 222).setOrigin(0).setInteractive({ useHandCursor: ready });
+      if (ready) {
+        const btn = this.add.container(cx + 50, 236);
+        btn.add(this.add.image(0, 0, 'btnGreen').setDisplaySize(112, 42));
+        btn.add(this.add.text(0, -3, 'Livrer', { fontFamily: FONT, fontSize: '20px', color: '#fff', fontStyle: 'bold', stroke: '#146b38', strokeThickness: 4 }).setOrigin(0.5));
+        this.tweens.add({ targets: btn, scale: 1.08, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        this.orderLayer.add(btn);
+      }
+      const hit = this.add.zone(colW * k, 100, colW, 250).setOrigin(0).setInteractive({ useHandCursor: ready });
       hit.on('pointerup', () => (ready ? this.deliver(k) : this.say(`${who.name} attend : ${o.wants.map((w) => CHAINS[w.chain].items[w.level - 1]).join(' et ')}.`)));
       this.orderLayer.add(hit);
     });
@@ -349,24 +383,49 @@ export class GameScene extends Phaser.Scene {
     const o = this.s.orders[k];
     const cells = this.findItems(o);
     if (!cells) return;
+    const cx = (W / 3) * k + W / 6;
     cells.forEach((i) => {
       const sp = this.sprites[i];
       this.s.board[i] = null;
       this.sprites[i] = null;
-      if (sp) this.tweens.add({ targets: sp, y: 230, x: 110 + k * 235, alpha: 0, duration: 380, ease: 'Quad.In', onComplete: () => sp.destroy() });
+      if (sp) this.tweens.add({ targets: sp, y: 300, x: cx, alpha: 0, duration: 380, ease: 'Quad.In', onComplete: () => sp.destroy() });
     });
     this.s.coins += o.coins;
     this.s.stars += 1;
     this.sfx.deliver();
-    this.sparkles.explode(24, 110 + k * 235, 220);
-    this.float(110 + k * 235, 200, `+${o.coins}  +1 étoile`, '#f4c430');
+    this.sparkles.explode(28, cx, 200);
+    this.float(cx, 170, `+${o.coins}  +1 étoile`, '#ffd54a');
     const who = CHARACTERS.find((c) => c.id === o.who)!;
     this.say(`${who.name} te remercie ! Les étoiles serviront à rénover le riad.`);
     this.s.orders[k] = makeOrder(this.s);
     this.selected = -1;
     save(this.s);
     this.refreshHud();
+    this.cheer(k, this.s.orders[k].who);
     this.time.delayedCall(400, () => this.afterChange(true));
+  }
+
+  // The character jumps for joy, then the next one steps in.
+  private cheer(k: number, next: string) {
+    const bust = this.busts[k];
+    const base = bust.getData('base') as number;
+    const who = bust.texture.key.replace('bust-', '');
+    this.tweens.killTweensOf(bust);
+    bust.setTexture(`happy-${who}`).setScale(base);
+    this.tweens.chain({
+      targets: bust,
+      tweens: [
+        { scaleY: base * 0.9, scaleX: base * 1.08, duration: 110, ease: 'Quad.Out' },
+        { y: 266, scaleY: base * 1.06, scaleX: base * 0.96, duration: 200, ease: 'Quad.Out' },
+        { y: 296, scaleY: base, scaleX: base, duration: 200, ease: 'Bounce.Out' },
+        { y: 276, duration: 160, ease: 'Quad.Out', yoyo: true },
+        { alpha: 0, y: 320, duration: 260, delay: 350, ease: 'Quad.In' },
+      ],
+      onComplete: () => {
+        bust.setTexture(`bust-${next}`).setAlpha(0).setY(296);
+        this.tweens.add({ targets: bust, alpha: 1, duration: 300, onComplete: () => this.breathe(bust, k) });
+      },
+    });
   }
 
   // ---------- HUD ----------

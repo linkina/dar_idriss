@@ -68,8 +68,8 @@ const ICONS: Record<string, string> = {
 // Portraits: women wear a veil and caftan, men a jellaba (hood) or tarbouche.
 interface Look { bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; trim: string }
 const LOOKS: Record<string, Look> = {
-  idriss: { bg: '#2e6fa8', robe: '#f5f0e6', hair: '#2b1a10', beard: true, trim: '#d4a24c' },
-  sarah: { bg: '#8e44ad', robe: '#1f8a70', veil: '#f2d7e0', trim: '#f1c40f' },
+  idriss: { bg: '#2e6fa8', robe: '#f5f0e6', hood: '#d9c49c', hair: '#2b1a10', beard: true, trim: '#d4a24c' },
+  sarah: { bg: '#8e44ad', robe: '#1f8a70', veil: '#e79bb5', trim: '#f1c40f' },
   fatima: { bg: '#c0392b', robe: '#6c3483', veil: '#f5f0e6', trim: '#d4a24c' },
   brahim: { bg: '#1f8a70', robe: '#5d6d7e', hood: '#5d6d7e', hair: '#2b1a10', trim: '#f5f0e6' },
   omar: { bg: '#d4a24c', robe: '#8d6e63', fez: true, beard: true, hair: '#555', trim: '#f5f0e6' },
@@ -77,7 +77,7 @@ const LOOKS: Record<string, Look> = {
   ali: { bg: '#27ae60', robe: '#e74c3c', hair: '#3b2412', child: true, trim: '#f5f0e6' },
 };
 
-function portrait(l: Look): string {
+function portrait(l: Look, mode: 'face' | 'bust' | 'happy' = 'face'): string {
   const s = l.child ? 0.85 : 1;
   const face = `<g transform="translate(50 ${l.child ? 48 : 44}) scale(${s})">`;
   let back = '';
@@ -87,11 +87,62 @@ function portrait(l: Look): string {
   if (l.hair && !l.veil) top += `<path d="M-19 -6 Q-20 -24 0 -24 Q20 -24 19 -6 Q14 -16 0 -16 Q-14 -16 -19 -6Z" fill="${l.hair}"/>`;
   if (l.fez) top += `<path d="M-14 -16 L-11 -34 L11 -34 L14 -16Z" fill="#c0392b" stroke="#7d2219" stroke-width="1.5"/><path d="M0 -34 Q8 -30 10 -22" stroke="#111" stroke-width="2" fill="none"/>`;
   const beard = l.beard ? `<path d="M-15 2 Q-14 20 0 22 Q14 20 15 2 Q8 12 0 12 Q-8 12 -15 2Z" fill="${l.hair}"/>` : '';
-  const head = `<circle cx="0" cy="-2" r="18" fill="#e6b88a"/>` + `<circle cx="-6" cy="-4" r="2" fill="#2b1a10"/><circle cx="6" cy="-4" r="2" fill="#2b1a10"/><path d="M-6 6 Q0 10 6 6" stroke="#8a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  // Happy: closed smiling eyes, open smile and rosy cheeks.
+  const eyes = mode === 'happy'
+    ? `<path d="M-9 -3 Q-6 -8 -3 -3 M3 -3 Q6 -8 9 -3" stroke="#2b1a10" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="-6" cy="-4" rx="2.2" ry="2.8" fill="#2b1a10"/><ellipse cx="6" cy="-4" rx="2.2" ry="2.8" fill="#2b1a10"/><circle cx="-5.3" cy="-5" r=".8" fill="#fff"/><circle cx="6.7" cy="-5" r=".8" fill="#fff"/>`;
+  const mouth = mode === 'happy'
+    ? `<path d="M-8 4 Q0 16 8 4Z" fill="#8a2a1a"/><path d="M-6 5 L6 5 L5 7 L-5 7Z" fill="#fff"/>`
+    : `<path d="M-6 6 Q0 10 6 6" stroke="#8a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const cheeks = `<circle cx="-11" cy="3" r="3.5" fill="#f08a7a" opacity="${mode === 'happy' ? 0.6 : 0.3}"/><circle cx="11" cy="3" r="3.5" fill="#f08a7a" opacity="${mode === 'happy' ? 0.6 : 0.3}"/>`;
+  const head = `<circle cx="0" cy="-2" r="18" fill="#e6b88a"/>` + cheeks + eyes + (l.beard ? '' : mouth);
   const veilFront = l.veil ? `<path d="M-20 -6 Q-21 -24 0 -24 Q21 -24 20 -6 Q20 -20 0 -20 Q-20 -20 -20 -6Z" fill="${l.veil}"/>` : '';
+  const after = l.beard ? mouth : '';
+  const robe = `<path d="M8 104 Q10 68 50 66 Q90 68 92 104Z" fill="${l.robe}"/><path d="M50 68 L50 104" stroke="${l.trim}" stroke-width="3"/><path d="M40 70 Q50 78 60 70" stroke="${l.trim}" stroke-width="2.5" fill="none"/>`;
+  if (mode !== 'face') return face + back + `</g>` + robe + face + head + beard + after + top + veilFront + `</g>`;
   return `<circle cx="50" cy="50" r="48" fill="${l.bg}"/><clipPath id="c"><circle cx="50" cy="50" r="48"/></clipPath><g clip-path="url(#c)">` +
     face + back + `</g><path d="M14 104 Q16 70 50 68 Q84 70 86 104Z" fill="${l.robe}"/><path d="M50 70 L50 100" stroke="${l.trim}" stroke-width="3"/>` +
-    face + head + beard + top + veilFront + `</g></g><circle cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="3"/>`;
+    face + head + beard + after + top + veilFront + `</g></g><circle cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="3"/>`;
+}
+
+// Half-body character for the counter: more detail than the round portrait.
+function bust(l: Look, happy: boolean): string {
+  const k = l.child ? 0.86 : 1;
+  const hx = 50;
+  const hy = l.child ? 44 : 40;
+  const skin = `<radialGradient id="sk" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#f6d3ae"/><stop offset="1" stop-color="#d9a073"/></radialGradient>`;
+  const cloth = `<linearGradient id="cl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient>`;
+  let out = `<defs>${skin}${cloth}</defs>`;
+  // Shoulders and robe.
+  const robe = `<path d="M6 100 Q8 70 30 64 Q50 60 70 64 Q92 70 94 100Z" fill="${l.robe}"/>`;
+  const trim = l.veil
+    ? `<path d="M50 66 L50 100" stroke="${l.trim}" stroke-width="3.5"/>` + [72, 79, 86, 93].map((y) => `<circle cx="50" cy="${y}" r="1.8" fill="${l.trim}"/>`).join('') + `<path d="M36 66 Q50 74 64 66" stroke="${l.trim}" stroke-width="3" fill="none"/>`
+    : `<path d="M42 64 L50 78 L58 64" stroke="${l.trim}" stroke-width="3" fill="none"/><path d="M50 78 L50 100" stroke="${l.trim}" stroke-width="2.5"/>`;
+  const hoodBack = l.hood || (!l.veil && !l.fez && !l.child) ? `<path d="M26 66 Q22 48 34 44 L66 44 Q78 48 74 66 Q50 74 26 66Z" fill="${l.hood ?? l.robe}"/><path d="M26 66 Q22 48 34 44 L66 44 Q78 48 74 66 Q50 74 26 66Z" fill="url(#cl)"/>` : '';
+  const veilBack = l.veil ? `<path d="M${hx - 24} ${hy + 4} Q${hx - 27} ${hy - 26} ${hx} ${hy - 27} Q${hx + 27} ${hy - 26} ${hx + 24} ${hy + 4} L${hx + 32} ${hy + 34} Q${hx} ${hy + 44} ${hx - 32} ${hy + 34}Z" fill="${l.veil}"/><path d="M${hx - 24} ${hy + 4} Q${hx - 27} ${hy - 26} ${hx} ${hy - 27} Q${hx + 27} ${hy - 26} ${hx + 24} ${hy + 4} L${hx + 32} ${hy + 34} Q${hx} ${hy + 44} ${hx - 32} ${hy + 34}Z" fill="url(#cl)"/>` : '';
+  out += hoodBack + robe + `<path d="M6 100 Q8 70 30 64 Q50 60 70 64 Q92 70 94 100Z" fill="url(#cl)"/>` + trim + veilBack;
+  // Head.
+  out += `<g transform="translate(${hx} ${hy}) scale(${k})">`;
+  out += `<rect x="-6" y="10" width="12" height="12" fill="#d9a073"/>`;
+  if (!l.veil) out += `<ellipse cx="-17" cy="0" rx="3.5" ry="5" fill="#e3ad80"/><ellipse cx="17" cy="0" rx="3.5" ry="5" fill="#e3ad80"/>`;
+  out += `<ellipse cx="0" cy="-1" rx="17" ry="19" fill="url(#sk)"/>`;
+  if (l.hair && !l.veil) out += `<path d="M-17 -4 Q-19 -24 0 -24 Q19 -24 17 -4 Q16 -14 8 -16 Q2 -12 -6 -16 Q-15 -14 -17 -4Z" fill="${l.hair}"/>`;
+  if (l.fez) out += `<path d="M-13 -15 L-10 -32 L10 -32 L13 -15Z" fill="#c0392b"/><ellipse cx="0" cy="-32" rx="10" ry="2.5" fill="#a93226"/><path d="M0 -32 Q9 -28 10 -19" stroke="#222" stroke-width="2" fill="none"/>`;
+  // Brows, eyes, nose, cheeks, mouth.
+  const brow = l.hair ?? '#5a3a22';
+  out += `<path d="M-11 -9 Q-7 -12 -3 -10 M3 -10 Q7 -12 11 -9" stroke="${brow}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  out += happy
+    ? `<path d="M-10 -3 Q-7 -8 -3 -3 M3 -3 Q7 -8 10 -3" stroke="#2b1a10" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="-6.5" cy="-3" rx="3.4" ry="3.8" fill="#fff"/><ellipse cx="6.5" cy="-3" rx="3.4" ry="3.8" fill="#fff"/><circle cx="-6" cy="-2.6" r="2.4" fill="#5b3a1e"/><circle cx="7" cy="-2.6" r="2.4" fill="#5b3a1e"/><circle cx="-6" cy="-2.6" r="1.2" fill="#111"/><circle cx="7" cy="-2.6" r="1.2" fill="#111"/><circle cx="-5.2" cy="-3.6" r=".8" fill="#fff"/><circle cx="7.8" cy="-3.6" r=".8" fill="#fff"/>`;
+  out += `<path d="M0 0 Q-2 4 0 5" stroke="#b97d55" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+  out += `<circle cx="-11" cy="5" r="3.5" fill="#f08a7a" opacity="${happy ? 0.65 : 0.35}"/><circle cx="11" cy="5" r="3.5" fill="#f08a7a" opacity="${happy ? 0.65 : 0.35}"/>`;
+  if (l.beard) out += `<path d="M-16 1 Q-15 20 0 22 Q15 20 16 1 Q12 9 7 9 Q0 7 -7 9 Q-12 9 -16 1Z" fill="${l.hair}"/>`;
+  out += happy
+    ? `<path d="M-7 8 Q0 18 7 8Z" fill="#8a2a1a"/><path d="M-5.5 8.5 L5.5 8.5 L4.5 10.5 L-4.5 10.5Z" fill="#fff"/>`
+    : `<path d="M-5 9 Q0 13 5 9" stroke="#8a3a2a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if (l.veil) out += `<path d="M-19 -2 Q-21 -24 0 -24 Q21 -24 19 -2 Q19 -20 0 -20 Q-19 -20 -19 -2Z" fill="${l.veil}"/><path d="M-19 -2 Q-21 -24 0 -24 Q21 -24 19 -2 Q19 -20 0 -20 Q-19 -20 -19 -2Z" fill="url(#cl)"/><path d="M-17 14 Q0 26 17 14" stroke="${l.veil}" stroke-width="5" fill="none"/>`;
+  out += `</g>`;
+  return out;
 }
 
 // Zellige background tile: eight-pointed stars on deep blue.
@@ -105,34 +156,36 @@ const raw = (w: number, h: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
 
 const UI: Record<string, string> = {
-  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf3e2"/><stop offset="1" stop-color="#ead7b0"/></linearGradient></defs>
-    <rect x="4" y="6" width="88" height="88" rx="14" fill="#b58a52"/><rect x="4" y="3" width="88" height="86" rx="14" fill="url(#t)"/>
-    <rect x="6" y="5" width="84" height="20" rx="10" fill="#fff" opacity=".45"/>`),
-  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e6c6"/><stop offset="1" stop-color="#dcc497"/></linearGradient></defs>
-    <rect x="4" y="6" width="88" height="88" rx="14" fill="#a87c45"/><rect x="4" y="3" width="88" height="86" rx="14" fill="url(#t)"/>
-    <rect x="6" y="5" width="84" height="20" rx="10" fill="#fff" opacity=".35"/>`),
-  card: raw(220, 228, `<defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6332"/><stop offset="1" stop-color="#6b3f1d"/></linearGradient>
-    <linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f1e1bf"/></linearGradient></defs>
-    <rect x="2" y="8" width="216" height="218" rx="22" fill="#000" opacity=".25"/><rect x="0" y="0" width="220" height="220" rx="22" fill="url(#w)"/>
-    <rect x="3" y="2" width="214" height="30" rx="16" fill="#fff" opacity=".18"/><rect x="9" y="9" width="202" height="202" rx="16" fill="url(#p)"/>
-    <path d="M110 16 l6 6 -6 6 -6 -6Z" fill="#d4a24c"/>` + [[16, 16], [204, 16], [16, 204], [204, 204]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#e8bf62" stroke="#8a5a22" stroke-width="1.5"/>`).join('')),
+  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3f4fb"/></linearGradient></defs>
+    <rect x="3" y="6" width="90" height="88" rx="16" fill="#9fd3ea"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
+    <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".8"/>`),
+  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3fbff"/><stop offset="1" stop-color="#cfeaf6"/></linearGradient></defs>
+    <rect x="3" y="6" width="90" height="88" rx="16" fill="#8cc6e0"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
+    <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".7"/>`),
+  tray: raw(220, 96, `<defs><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff1fa"/></linearGradient></defs>
+    <rect x="2" y="10" width="216" height="84" rx="22" fill="#2a7fb8" opacity=".35"/><rect x="0" y="4" width="220" height="84" rx="22" fill="#3cb4e0"/>
+    <rect x="4" y="4" width="212" height="78" rx="20" fill="url(#p)"/><rect x="14" y="8" width="192" height="16" rx="8" fill="#fff"/>`),
+  arch: raw(220, 250, `<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7e8"/><stop offset="1" stop-color="#f3dfbd"/></linearGradient></defs>
+    <path d="M10 250 L10 110 Q10 30 60 18 Q110 0 160 18 Q210 30 210 110 L210 250Z" fill="#e8bf62"/>
+    <path d="M20 250 L20 112 Q20 42 66 30 Q110 14 154 30 Q200 42 200 112 L200 250Z" fill="url(#a)"/>
+    <path d="M36 250 L36 118 Q36 60 74 48 Q110 36 146 48 Q184 60 184 118 L184 250Z" fill="#9fdcef" opacity=".55"/>`),
   btnGreen: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd38a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
     <rect x="0" y="6" width="192" height="48" rx="16" fill="#146b38"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".35"/>`),
   btnGrey: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9cdb8"/><stop offset="1" stop-color="#b3a58c"/></linearGradient></defs>
     <rect x="0" y="6" width="192" height="48" rx="16" fill="#8c7e66"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".3"/>`),
-  pill: raw(230, 60, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4a78"/><stop offset="1" stop-color="#0f2c4b"/></linearGradient></defs>
-    <rect x="2" y="2" width="226" height="56" rx="28" fill="url(#g)" stroke="#e8bf62" stroke-width="3"/><rect x="14" y="6" width="202" height="14" rx="7" fill="#fff" opacity=".12"/>`),
+  pill: raw(230, 60, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff1fa"/></linearGradient></defs>
+    <rect x="2" y="5" width="226" height="54" rx="27" fill="#2a7fb8" opacity=".35"/><rect x="2" y="2" width="226" height="52" rx="26" fill="url(#g)" stroke="#3cb4e0" stroke-width="3"/><rect x="16" y="6" width="198" height="12" rx="6" fill="#fff"/>`),
+  rays: raw(256, 256, `<defs><radialGradient id="ry" cx="128" cy="128" r="128" gradientUnits="userSpaceOnUse"><stop offset=".1" stop-color="#fff6c2" stop-opacity="1"/><stop offset=".55" stop-color="#ffd54a" stop-opacity=".75"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient>
+    <radialGradient id="c"><stop offset="0" stop-color="#fffbe6"/><stop offset=".5" stop-color="#ffe680" stop-opacity=".8"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></radialGradient></defs><path d="M128 128 L255.0 112.4 L255.0 143.6Z" fill="url(#ry)"/><path d="M128 128 L245.8 178.0 L230.2 205.0Z" fill="url(#ry)"/><path d="M128 128 L205.0 230.2 L178.0 245.8Z" fill="url(#ry)"/><path d="M128 128 L143.6 255.0 L112.4 255.0Z" fill="url(#ry)"/><path d="M128 128 L78.0 245.8 L51.0 230.2Z" fill="url(#ry)"/><path d="M128 128 L25.8 205.0 L10.2 178.0Z" fill="url(#ry)"/><path d="M128 128 L1.0 143.6 L1.0 112.4Z" fill="url(#ry)"/><path d="M128 128 L10.2 78.0 L25.8 51.0Z" fill="url(#ry)"/><path d="M128 128 L51.0 25.8 L78.0 10.2Z" fill="url(#ry)"/><path d="M128 128 L112.4 1.0 L143.6 1.0Z" fill="url(#ry)"/><path d="M128 128 L178.0 10.2 L205.0 25.8Z" fill="url(#ry)"/><path d="M128 128 L230.2 51.0 L245.8 78.0Z" fill="url(#ry)"/><circle cx="128" cy="128" r="70" fill="url(#c)"/>`),
   sparkle: raw(32, 32, `<path d="M16 0 L19 13 L32 16 L19 19 L16 32 L13 19 L0 16 L13 13Z" fill="#fff6c8"/><circle cx="16" cy="16" r="4" fill="#fff"/>`),
+  glowGreen: raw(128, 128, `<defs><radialGradient id="r"><stop offset=".3" stop-color="#1ec760" stop-opacity=".85"/><stop offset=".62" stop-color="#27ae60" stop-opacity=".55"/><stop offset="1" stop-color="#27ae60" stop-opacity="0"/></radialGradient></defs><rect x="6" y="6" width="116" height="116" rx="26" fill="url(#r)"/><rect x="10" y="10" width="108" height="108" rx="22" fill="none" stroke="#27ae60" stroke-width="5" opacity=".9"/>`),
   glow: raw(128, 128, `<defs><radialGradient id="r"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="64" fill="url(#r)"/>`),
 };
 
 // Riad courtyard behind the game: sky, horseshoe arches, zellige wainscot.
-const COURTYARD = raw(720, 1280, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc4e8"/><stop offset="1" stop-color="#d9eef7"/></linearGradient>
-  <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1d9b5"/><stop offset="1" stop-color="#d9b48a"/></linearGradient>
-  <pattern id="z" width="60" height="60" patternUnits="userSpaceOnUse"><rect width="60" height="60" fill="#24507e"/><rect x="15" y="15" width="30" height="30" fill="#f3e9d2"/><rect x="15" y="15" width="30" height="30" fill="#f3e9d2" transform="rotate(45 30 30)"/><circle cx="30" cy="30" r="8" fill="#1f8a70"/><circle cx="0" cy="0" r="7" fill="#c0392b"/><circle cx="60" cy="60" r="7" fill="#c0392b"/><circle cx="60" cy="0" r="7" fill="#c0392b"/><circle cx="0" cy="60" r="7" fill="#c0392b"/></pattern></defs>
-  <rect width="720" height="1280" fill="url(#sky)"/><rect y="70" width="720" height="1210" fill="url(#wall)"/>` +
-  [0, 1, 2, 3].map((i) => { const x = 20 + i * 175; return `<path d="M${x} 1280 L${x} 260 Q${x} 150 ${x + 70} 140 Q${x + 140} 150 ${x + 140} 260 L${x + 140} 1280Z" fill="#c99a68"/><path d="M${x + 12} 1280 L${x + 12} 262 Q${x + 12} 166 ${x + 70} 156 Q${x + 128} 166 ${x + 128} 262 L${x + 128} 1280Z" fill="#3c6e8f" opacity=".55"/>`; }).join('') +
-  `<rect y="1000" width="720" height="280" fill="url(#z)" opacity=".9"/><rect y="992" width="720" height="10" fill="#d4a24c"/>`);
+const COURTYARD = raw(720, 1280, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fc3ea"/><stop offset=".5" stop-color="#8fdcf2"/><stop offset="1" stop-color="#bfeaf7"/></linearGradient>
+  <pattern id="z" width="90" height="90" patternUnits="userSpaceOnUse"><g fill="none" stroke="#fff" stroke-width="2" opacity=".35"><rect x="25" y="25" width="40" height="40"/><rect x="25" y="25" width="40" height="40" transform="rotate(45 45 45)"/><circle cx="45" cy="45" r="9"/></g></pattern></defs>
+  <rect width="720" height="1280" fill="url(#sky)"/><rect width="720" height="1280" fill="url(#z)"/>`);
 
 export function artEntries(): [string, string][] {
   const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD]];
@@ -140,6 +193,10 @@ export function artEntries(): [string, string][] {
   for (const [chain, list] of Object.entries(ITEMS)) list.forEach((b, i) => out.push([`${chain}-${i + 1}`, svg(b)]));
   for (const [chain, b] of Object.entries(GENERATORS)) out.push([`gen-${chain}`, svg(b)]);
   for (const [k, b] of Object.entries(ICONS)) out.push([`icon-${k}`, svg(b, 64)]);
-  for (const [k, l] of Object.entries(LOOKS)) out.push([`face-${k}`, svg(portrait(l), 120)]);
+  for (const [k, l] of Object.entries(LOOKS)) {
+    out.push([`face-${k}`, svg(portrait(l), 120)]);
+    out.push([`bust-${k}`, svg(bust(l, false), 200)]);
+    out.push([`happy-${k}`, svg(bust(l, true), 200)]);
+  }
   return out;
 }
