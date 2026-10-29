@@ -2,13 +2,24 @@ import Phaser from 'phaser';
 import { ALL_TASKS, CHAINS, CHARACTERS, COLS, ENERGY_MAX, MAX_LEVEL, ROWS } from './data';
 import { Sounds } from './sound';
 import { load, makeOrder, msToNextEnergy, save, tickEnergy, today, type Cell, type Order, type Save } from './state';
+import { H, W } from './ui';
 
-const W = 720;
-const CELL = 96;
+// Taller phones get full-size cells, a little air above the board and a big info panel.
+const EXTRA = H - 1280;
+const CELL = EXTRA >= 120 ? 96 : 92;
 const BOARD_X = (W - COLS * CELL) / 2;
-const BOARD_Y = 352;
+const BOARD_Y = 352 + Math.round(Math.max(0, Math.min(60, (EXTRA - 200) * 0.3)));
+const PANEL_Y = BOARD_Y + ROWS * CELL + 22;
+const PANEL_H = H - PANEL_Y;
+const TALL = PANEL_H >= 190;
+// One bright colour per family, used in the info panel.
+const CHAIN_COLOR: Record<string, number> = {
+  menthe: 0x22b35e, pain: 0xf39c12, couture: 0xe84393, souk: 0x8e44ad,
+  poterie: 0x2471d6, orangers: 0xff7f11, cuivre: 0xc0392b, hammam: 0x14b8a6,
+};
+const hex = (c: number) => '#' + c.toString(16).padStart(6, '0');
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
-const INK = '#1b3a5c';
+const INK = '#1a2f6b';
 
 const texKey = (c: NonNullable<Cell>) => (c.kind === 'gen' ? `gen-${c.chain}` : `${c.chain}-${c.level}`);
 const cellName = (c: NonNullable<Cell>) => (c.kind === 'gen' ? CHAINS[c.chain].generator : CHAINS[c.chain].items[c.level - 1]);
@@ -28,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private riadBadge!: Phaser.GameObjects.Arc;
   private shopBadge!: Phaser.GameObjects.Arc;
   private info!: Phaser.GameObjects.Text;
+  private infoHead!: Phaser.GameObjects.Container;
   private soundIcon!: Phaser.GameObjects.Image;
   private orderLayer!: Phaser.GameObjects.Container;
   private dragging = false;
@@ -50,7 +62,7 @@ export class GameScene extends Phaser.Scene {
     this.input.dragDistanceThreshold = 8;
     this.input.once('pointerdown', () => this.sfx.start());
 
-    this.add.image(0, 0, 'courtyard').setOrigin(0);
+    this.add.image(0, 0, 'courtyard').setOrigin(0).setDisplaySize(W, H);
     this.drawTopBar();
     this.drawCharacters();
     this.orderLayer = this.add.container(0, 0);
@@ -84,11 +96,7 @@ export class GameScene extends Phaser.Scene {
       lifespan: 650, gravityY: 300, rotate: { min: 0, max: 360 }, emitting: false,
     }).setDepth(15);
 
-    this.add.rectangle(0, 1226, W, 54, 0xffffff, 0.85).setOrigin(0);
-    this.add.rectangle(0, 1226, W, 3, 0x3cb4e0).setOrigin(0);
-    this.info = this.add.text(W / 2, 1253, '', { fontFamily: FONT, fontSize: '18px', color: INK, align: 'center', wordWrap: { width: W - 200 } }).setOrigin(0.5);
-    this.riadBadge = this.roundButton(54, 1238, 'icon-riad', 'Riad', () => this.openRiad());
-    this.shopBadge = this.roundButton(W - 54, 1238, 'icon-shop', 'Boutique', () => this.openShop());
+    this.drawBottomPanel();
     this.say('Bienvenue à Dar Idriss ! Touche le jardin de menthe pour faire pousser une feuille.');
 
     this.placeInbox();
@@ -109,15 +117,15 @@ export class GameScene extends Phaser.Scene {
     const hud = { fontFamily: FONT, fontSize: '26px', color: INK, fontStyle: 'bold' };
     this.add.image(40, 46, 'icon-energy').setDisplaySize(40, 40);
     this.energyText = this.add.text(64, 30, '', hud);
-    this.timerText = this.add.text(118, 37, '', { fontFamily: FONT, fontSize: '15px', color: '#2a7fb8', fontStyle: 'bold' });
+    this.timerText = this.add.text(118, 37, '', { fontFamily: FONT, fontSize: '15px', color: '#b5532e', fontStyle: 'bold' });
     this.add.image(224, 46, 'icon-coin').setDisplaySize(38, 38);
     this.coinText = this.add.text(250, 30, '', hud);
     this.add.image(382, 46, 'icon-star').setDisplaySize(38, 38);
     this.starText = this.add.text(408, 30, '', hud);
     this.add.image(520, 46, 'icon-dirham').setDisplaySize(36, 36);
     this.dirhamText = this.add.text(546, 30, '', hud);
-    this.add.circle(678, 49, 26, 0x2a7fb8, 0.4);
-    this.add.circle(678, 46, 26, 0x3cb4e0).setStrokeStyle(3, 0xffffff);
+    this.add.circle(678, 49, 26, 0x5a2410, 0.4);
+    this.add.circle(678, 46, 26, 0x1d3f94).setStrokeStyle(3, 0xffffff);
     this.soundIcon = this.add.image(678, 46, this.s.sound ? 'icon-soundOn' : 'icon-soundOff').setDisplaySize(30, 30).setInteractive({ useHandCursor: true });
     this.soundIcon.on('pointerup', () => {
       this.s.sound = !this.s.sound;
@@ -134,9 +142,10 @@ export class GameScene extends Phaser.Scene {
     const g = this.add.graphics();
     const fw = COLS * CELL + 24;
     const fh = ROWS * CELL + 24;
-    g.fillStyle(0x2a7fb8, 0.3).fillRoundedRect(BOARD_X - 12, BOARD_Y - 6, fw, fh, 26);
-    g.fillStyle(0x3cb4e0, 1).fillRoundedRect(BOARD_X - 12, BOARD_Y - 12, fw, fh, 26);
-    g.fillStyle(0xffffff, 0.75).fillRoundedRect(BOARD_X - 7, BOARD_Y - 7, fw - 10, fh - 10, 22);
+    g.fillStyle(0x5a2410, 0.4).fillRoundedRect(BOARD_X - 12, BOARD_Y - 4, fw, fh, 26);
+    g.fillStyle(0x0f8a5f, 1).fillRoundedRect(BOARD_X - 12, BOARD_Y - 12, fw, fh, 26);
+    g.lineStyle(3, 0xe0b048, 1).strokeRoundedRect(BOARD_X - 8, BOARD_Y - 8, fw - 8, fh - 8, 23);
+    g.fillStyle(0xfdf6e7, 0.9).fillRoundedRect(BOARD_X - 5, BOARD_Y - 5, fw - 14, fh - 14, 20);
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         this.add.image(BOARD_X + c * CELL, BOARD_Y + r * CELL, (r + c) % 2 ? 'tile' : 'tileAlt').setOrigin(0);
@@ -214,6 +223,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawSelection() {
+    this.drawInfoHead();
     this.selection.clear();
     this.selFrame.setVisible(false);
     this.infoBtn.setVisible(false);
@@ -243,6 +253,64 @@ export class GameScene extends Phaser.Scene {
 
   private say(text: string) {
     this.info.setText(text);
+  }
+
+  // Bottom panel: Riad and shop on the sides, info about the selected object in the middle.
+  private drawBottomPanel() {
+    const g = this.add.graphics();
+    g.fillStyle(0x5a2410, 0.4).fillRoundedRect(0, PANEL_Y - 4, W, PANEL_H + 40, 30);
+    g.fillStyle(0xfdf6e7, 1).fillRoundedRect(0, PANEL_Y, W, PANEL_H + 40, 30);
+    // A rainbow rim along the top edge.
+    const rim = [0xd22b26, 0xef7d1a, 0xf7c531, 0x0f8a5f, 0x1d3f94, 0x7fb3e3];
+    rim.forEach((c, k) => g.fillStyle(c, 1).fillRect((W / rim.length) * k, PANEL_Y, W / rim.length + 1, 7));
+    const midX = W / 2;
+    const midW = W - 240;
+    const btnY = TALL ? PANEL_Y + PANEL_H / 2 : PANEL_Y + PANEL_H / 2 + 2;
+    this.riadBadge = this.roundButton(62, btnY, 'icon-riad', 'Riad', 0x0f8a5f, () => this.openRiad());
+    this.shopBadge = this.roundButton(W - 62, btnY, 'icon-shop', 'Boutique', 0xd22b26, () => this.openShop());
+    // Centre the info block when the panel has room to spare.
+    const pad = Math.max(0, (PANEL_H - 260) / 2);
+    this.infoHead = this.add.container(midX, PANEL_Y + 18 + pad);
+    const textY = TALL ? PANEL_Y + 186 + pad : PANEL_Y + PANEL_H / 2 + 3;
+    this.info = this.add.text(midX, textY, '', {
+      fontFamily: FONT, fontSize: TALL ? '21px' : '18px', color: INK, align: 'center', wordWrap: { width: midW - 10 }, lineSpacing: 2,
+    }).setOrigin(0.5, TALL ? 0 : 0.5);
+  }
+
+  // Name, level and the whole family of the selected object (tall screens only).
+  private drawInfoHead() {
+    if (!TALL) return;
+    const head = this.infoHead;
+    head.removeAll(true);
+    const cell = this.selected >= 0 ? this.s.board[this.selected] : null;
+    if (!cell) {
+      head.add(this.add.text(0, 6, 'Dar Idriss', { fontFamily: FONT, fontSize: '30px', color: '#c2410c', fontStyle: 'bold', stroke: '#ffe9b0', strokeThickness: 6 }).setOrigin(0.5, 0));
+      head.add(this.add.text(0, 52, 'Touche un objet pour voir sa famille', { fontFamily: FONT, fontSize: '19px', color: '#0f8a5f', fontStyle: 'bold' }).setOrigin(0.5, 0));
+      const icons = ['icon-energy', 'icon-coin', 'icon-star', 'icon-dirham'];
+      icons.forEach((k, n) => head.add(this.add.image((n - 1.5) * 76, 120, k).setDisplaySize(52, 52)));
+      return;
+    }
+    const color = CHAIN_COLOR[cell.chain] ?? 0x3cb4e0;
+    const name = cellName(cell);
+    const tag = cell.kind === 'gen' ? 'Générateur' : `Niveau ${cell.level}/${MAX_LEVEL}`;
+    const title = this.add.text(0, 4, name, { fontFamily: FONT, fontSize: '26px', color: hex(color), fontStyle: 'bold', stroke: '#fff', strokeThickness: 5 }).setOrigin(0.5, 0);
+    const pillW = tag.length * 10 + 30;
+    const pill = this.add.graphics();
+    pill.fillStyle(color, 1).fillRoundedRect(-pillW / 2, 42, pillW, 30, 15);
+    head.add([title, pill, this.add.text(0, 57, tag, { fontFamily: FONT, fontSize: '17px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5)]);
+    // The family, from level 1 to the last, current level highlighted.
+    const step = 76;
+    for (let n = 0; n < MAX_LEVEL; n++) {
+      const x = (n - (MAX_LEVEL - 1) / 2) * step;
+      const current = cell.kind === 'item' && cell.level === n + 1;
+      const done = cell.kind === 'item' && n + 1 < cell.level;
+      const bg = this.add.graphics();
+      bg.fillStyle(current ? color : done ? 0xe8f4ea : 0xf4e8d2, 1).fillRoundedRect(x - 33, 90, 66, 66, 16);
+      if (current) bg.lineStyle(4, 0xffd21f, 1).strokeRoundedRect(x - 33, 90, 66, 66, 16);
+      head.add(bg);
+      head.add(this.add.image(x, 123, `${cell.chain}-${n + 1}`).setDisplaySize(58, 58));
+      if (n < MAX_LEVEL - 1) head.add(this.add.text(x + step / 2, 123, '›', { fontFamily: FONT, fontSize: '24px', color: hex(color), fontStyle: 'bold' }).setOrigin(0.5));
+    }
   }
 
   // ---------- Board actions ----------
@@ -404,7 +472,7 @@ export class GameScene extends Phaser.Scene {
       const ready = this.findItems(o) !== null;
       const who = CHARACTERS.find((c) => c.id === o.who)!;
       this.orderLayer.add(this.add.image(cx, 256, 'tray').setOrigin(0.5, 0).setDisplaySize(220, 96));
-      this.orderLayer.add(this.add.text(cx - 96, 266, who.name, { fontFamily: FONT, fontSize: '17px', color: '#2a7fb8', fontStyle: 'bold' }));
+      this.orderLayer.add(this.add.text(cx - 96, 266, who.name, { fontFamily: FONT, fontSize: '17px', color: '#b5532e', fontStyle: 'bold' }));
       this.orderLayer.add(this.add.image(cx + 58, 276, 'icon-coin').setDisplaySize(22, 22));
       this.orderLayer.add(this.add.text(cx + 72, 266, `+${o.coins}`, { fontFamily: FONT, fontSize: '17px', color: INK, fontStyle: 'bold' }));
 
@@ -486,16 +554,19 @@ export class GameScene extends Phaser.Scene {
   // ---------- Riad, shop, new generators ----------
 
   // Round button in the bottom bar with a red dot for "something to do".
-  private roundButton(x: number, y: number, icon: string, label: string, onClick: () => void) {
-    this.add.circle(x, y + 4, 40, 0x2a7fb8, 0.45);
-    const b = this.add.circle(x, y, 40, 0xffffff).setStrokeStyle(4, 0x3cb4e0).setInteractive({ useHandCursor: true });
-    this.add.image(x, y - 6, icon).setDisplaySize(48, 48);
-    this.add.text(x, y + 26, label, { fontFamily: FONT, fontSize: '15px', color: INK, fontStyle: 'bold', stroke: '#fff', strokeThickness: 4 }).setOrigin(0.5);
+  private roundButton(x: number, y: number, icon: string, label: string, color: number, onClick: () => void) {
+    const r = TALL ? 52 : 38;
+    this.add.circle(x, y + 5, r, 0x5a2410, 0.4);
+    const b = this.add.circle(x, y, r, color).setStrokeStyle(5, 0xffffff).setInteractive({ useHandCursor: true });
+    this.add.circle(x, y - 6, r * 0.62, 0xffffff, 0.9);
+    this.add.image(x, y - 6, icon).setDisplaySize(r * 1.05, r * 1.05);
+    this.add.text(x, y + r - 8, label, { fontFamily: FONT, fontSize: TALL ? '18px' : '15px', color: '#fff', fontStyle: 'bold', stroke: INK, strokeThickness: 5 }).setOrigin(0.5);
     b.on('pointerup', () => {
       this.sfx.tap();
+      this.tweens.add({ targets: b, scale: 0.9, duration: 70, yoyo: true });
       onClick();
     });
-    const dot = this.add.circle(x + 28, y - 28, 10, 0xe74c3c).setStrokeStyle(3, 0xffffff);
+    const dot = this.add.circle(x + r * 0.72, y - r * 0.72, 11, 0xe74c3c).setStrokeStyle(3, 0xffffff);
     this.tweens.add({ targets: dot, scale: 1.25, duration: 500, yoyo: true, repeat: -1 });
     return dot;
   }

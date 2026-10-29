@@ -1,3 +1,5 @@
+import { H } from './ui';
+
 // All game art is drawn here as small SVGs, turned into textures at boot.
 
 // Lighting filter that gives flat shapes volume: soft diffuse shading,
@@ -211,22 +213,22 @@ const raw = (w: number, h: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
 
 const UI: Record<string, string> = {
-  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3f4fb"/></linearGradient></defs>
-    <rect x="3" y="6" width="90" height="88" rx="16" fill="#9fd3ea"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
+  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbf2"/><stop offset="1" stop-color="#f6e6c8"/></linearGradient></defs>
+    <rect x="3" y="6" width="90" height="88" rx="16" fill="#d9b98a"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
     <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".8"/>`),
-  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3fbff"/><stop offset="1" stop-color="#cfeaf6"/></linearGradient></defs>
-    <rect x="3" y="6" width="90" height="88" rx="16" fill="#8cc6e0"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
+  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fc"/><stop offset="1" stop-color="#cfe0f2"/></linearGradient></defs>
+    <rect x="3" y="6" width="90" height="88" rx="16" fill="#97b6d8"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
     <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".7"/>`),
-  tray: raw(220, 96, `<defs><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff1fa"/></linearGradient></defs>
-    <rect x="2" y="10" width="216" height="84" rx="22" fill="#2a7fb8" opacity=".35"/><rect x="0" y="4" width="220" height="84" rx="22" fill="#3cb4e0"/>
+  tray: raw(220, 96, `<defs><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbf2"/><stop offset="1" stop-color="#f6e6c8"/></linearGradient></defs>
+    <rect x="2" y="10" width="216" height="84" rx="22" fill="#5a2410" opacity=".35"/><rect x="0" y="4" width="220" height="84" rx="22" fill="#1d3f94"/><rect x="2" y="6" width="216" height="80" rx="21" fill="none" stroke="#e0b048" stroke-width="2"/>
     <rect x="4" y="4" width="212" height="78" rx="20" fill="url(#p)"/><rect x="14" y="8" width="192" height="16" rx="8" fill="#fff"/>`),
 
   btnGreen: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd38a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
     <rect x="0" y="6" width="192" height="48" rx="16" fill="#146b38"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".35"/>`),
   btnGrey: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9cdb8"/><stop offset="1" stop-color="#b3a58c"/></linearGradient></defs>
     <rect x="0" y="6" width="192" height="48" rx="16" fill="#8c7e66"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".3"/>`),
-  pill: raw(230, 60, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff1fa"/></linearGradient></defs>
-    <rect x="2" y="5" width="226" height="54" rx="27" fill="#2a7fb8" opacity=".35"/><rect x="2" y="2" width="226" height="52" rx="26" fill="url(#g)" stroke="#3cb4e0" stroke-width="3"/><rect x="16" y="6" width="198" height="12" rx="6" fill="#fff"/>`),
+  pill: raw(230, 60, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbf2"/><stop offset="1" stop-color="#f6e6c8"/></linearGradient></defs>
+    <rect x="2" y="5" width="226" height="54" rx="27" fill="#5a2410" opacity=".4"/><rect x="2" y="2" width="226" height="52" rx="26" fill="url(#g)" stroke="#d9a441" stroke-width="4"/><rect x="16" y="6" width="198" height="12" rx="6" fill="#fff"/>`),
   rays: raw(256, 256, `<defs><radialGradient id="ry" cx="128" cy="128" r="128" gradientUnits="userSpaceOnUse"><stop offset=".1" stop-color="#fff6c2" stop-opacity="1"/><stop offset=".55" stop-color="#ffd54a" stop-opacity=".75"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient>
     <radialGradient id="c"><stop offset="0" stop-color="#fffbe6"/><stop offset=".5" stop-color="#ffe680" stop-opacity=".8"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></radialGradient></defs><path d="M128 128 L255.0 112.4 L255.0 143.6Z" fill="url(#ry)"/><path d="M128 128 L245.8 178.0 L230.2 205.0Z" fill="url(#ry)"/><path d="M128 128 L205.0 230.2 L178.0 245.8Z" fill="url(#ry)"/><path d="M128 128 L143.6 255.0 L112.4 255.0Z" fill="url(#ry)"/><path d="M128 128 L78.0 245.8 L51.0 230.2Z" fill="url(#ry)"/><path d="M128 128 L25.8 205.0 L10.2 178.0Z" fill="url(#ry)"/><path d="M128 128 L1.0 143.6 L1.0 112.4Z" fill="url(#ry)"/><path d="M128 128 L10.2 78.0 L25.8 51.0Z" fill="url(#ry)"/><path d="M128 128 L51.0 25.8 L78.0 10.2Z" fill="url(#ry)"/><path d="M128 128 L112.4 1.0 L143.6 1.0Z" fill="url(#ry)"/><path d="M128 128 L178.0 10.2 L205.0 25.8Z" fill="url(#ry)"/><path d="M128 128 L230.2 51.0 L245.8 78.0Z" fill="url(#ry)"/><circle cx="128" cy="128" r="70" fill="url(#c)"/>`),
   bigCheck: raw(110, 116, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ee89a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
@@ -243,9 +245,10 @@ const UI: Record<string, string> = {
 };
 
 // Riad courtyard behind the game: sky, horseshoe arches, zellige wainscot.
-const COURTYARD = raw(720, 1280, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fc3ea"/><stop offset=".5" stop-color="#8fdcf2"/><stop offset="1" stop-color="#bfeaf7"/></linearGradient>
-  <pattern id="z" width="90" height="90" patternUnits="userSpaceOnUse"><g fill="none" stroke="#fff" stroke-width="2" opacity=".35"><rect x="25" y="25" width="40" height="40"/><rect x="25" y="25" width="40" height="40" transform="rotate(45 45 45)"/><circle cx="45" cy="45" r="9"/></g></pattern></defs>
-  <rect width="720" height="1280" fill="url(#sky)"/><rect width="720" height="1280" fill="url(#z)"/>`);
+const COURTYARD = raw(720, H, `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5845a"/><stop offset=".55" stop-color="#cf6a40"/><stop offset="1" stop-color="#b5532e"/></linearGradient>
+  <pattern id="t" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M0 0 H120 V120" fill="none" stroke="#8f3c1e" stroke-width="3" opacity=".45"/><path d="M4 4 H116" stroke="#f2a57c" stroke-width="2" opacity=".35"/>
+    <g transform="translate(60 60)" opacity=".18"><path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6Z" fill="#fff3d6"/><rect x="-11" y="-11" width="22" height="22" fill="none" stroke="#fff3d6" stroke-width="2" transform="rotate(45)"/></g></pattern></defs>
+  <rect width="720" height="${H}" fill="url(#sky)"/><rect width="720" height="${H}" fill="url(#t)"/>`);
 
 // Riad rooms: a bare base per zone and one layer per renovation task.
 const R = (body: string) => raw(640, 440, body);

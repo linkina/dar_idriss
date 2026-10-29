@@ -22,7 +22,7 @@ export class ChainScene extends Phaser.Scene {
     panel(this, 30, top, W - 60, 570);
     this.add.image(96, top + 70, `gen-${d.chain}`).setDisplaySize(84, 84);
     text(this, 150, top + 38, chain.generator, 30);
-    text(this, 150, top + 78, 'Fusionne deux objets identiques pour passer au suivant.', 17, '#4a6a85', false);
+    text(this, 150, top + 78, 'Fusionne deux objets identiques pour passer au suivant.', 17, '#7a5a3a', false);
     const close = () => {
       d.sfx.tap();
       d.onClose();
@@ -41,15 +41,15 @@ export class ChainScene extends Phaser.Scene {
       const y = top + 140 + r * (tile + 50);
       const current = i + 1 === d.level;
       const g = this.add.graphics();
-      g.fillStyle(0x8cc6e0, 1).fillRoundedRect(x, y + 5, tile, tile, 22);
+      g.fillStyle(0xd9b98a, 1).fillRoundedRect(x, y + 5, tile, tile, 22);
       g.fillStyle(current ? 0xfff3c4 : 0xffffff, 1).fillRoundedRect(x, y, tile, tile, 22);
       if (current) g.lineStyle(5, 0xffc21a, 1).strokeRoundedRect(x, y, tile, tile, 22);
       this.add.image(x + tile / 2, y + tile / 2 - 12, `${d.chain}-${i + 1}`).setDisplaySize(110, 110);
-      this.add.circle(x + 24, y + 24, 17, 0x3cb4e0).setStrokeStyle(3, 0xffffff);
+      this.add.circle(x + 24, y + 24, 17, 0x0f8a5f).setStrokeStyle(3, 0xffffff);
       this.add.text(x + 24, y + 24, `${i + 1}`, { fontFamily: FONT, fontSize: '18px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
       this.add.text(x + tile / 2, y + tile - 26, chain.items[i], { fontFamily: FONT, fontSize: '17px', color: INK, fontStyle: 'bold', align: 'center', wordWrap: { width: tile - 12 } }).setOrigin(0.5);
       // Arrow to the next level in the same row.
-      if (c < cols - 1 && i < MAX_LEVEL - 1) this.add.text(x + tile + gap / 2, y + tile / 2, '›', { fontFamily: FONT, fontSize: '40px', color: '#3cb4e0', fontStyle: 'bold' }).setOrigin(0.5);
+      if (c < cols - 1 && i < MAX_LEVEL - 1) this.add.text(x + tile + gap / 2, y + tile / 2, '›', { fontFamily: FONT, fontSize: '40px', color: '#d9a441', fontStyle: 'bold' }).setOrigin(0.5);
     }
   }
 }

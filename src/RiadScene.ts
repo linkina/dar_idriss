@@ -42,7 +42,7 @@ export class RiadScene extends Phaser.Scene {
     this.starText = text(this, 446, 68, '', 28);
     closeButton(this, W - 56, 84, () => this.close());
     this.layer = this.add.container(0, 0);
-    this.note = this.add.text(W / 2, 1210, '', { fontFamily: FONT, fontSize: '20px', color: '#2a7fb8', align: 'center', wordWrap: { width: W - 80 } }).setOrigin(0.5);
+    this.note = this.add.text(W / 2, 1210, '', { fontFamily: FONT, fontSize: '20px', color: '#b5532e', align: 'center', wordWrap: { width: W - 80 } }).setOrigin(0.5);
     this.render();
   }
 
@@ -63,7 +63,7 @@ export class RiadScene extends Phaser.Scene {
       const open = zoneOpen(s, i);
       const active = i === this.zone;
       const tab = this.add.graphics();
-      tab.fillStyle(active ? 0x3cb4e0 : open ? 0xdff1fa : 0xe5e8ea, 1).fillRoundedRect(x, 120, 196, 54, 18);
+      tab.fillStyle(active ? 0x1d3f94 : open ? 0xf6e6c8 : 0xe5e8ea, 1).fillRoundedRect(x, 120, 196, 54, 18);
       this.layer.add(tab);
       const label = this.add.text(x + 98 + (open ? 0 : 12), 147, z.short, { fontFamily: FONT, fontSize: '21px', color: active ? '#fff' : open ? INK : '#8a9599', fontStyle: 'bold' }).setOrigin(0.5);
       this.layer.add(label);
@@ -94,7 +94,7 @@ export class RiadScene extends Phaser.Scene {
       const y = 670 + k * 128;
       const isDone = s.tasksDone.includes(t.id);
       const row = this.add.graphics();
-      row.fillStyle(0x8cc6e0, 1).fillRoundedRect(40, y + 4, W - 80, 112, 20);
+      row.fillStyle(0xd9b98a, 1).fillRoundedRect(40, y + 4, W - 80, 112, 20);
       row.fillStyle(isDone ? 0xe5f6ec : 0xffffff, 1).fillRoundedRect(40, y, W - 80, 110, 20);
       this.layer.add(row);
       this.layer.add(text(this, 64, y + 18, t.name, 24));

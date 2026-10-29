@@ -4,7 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.daridriss.game',
   appName: 'Dar Idriss',
   webDir: 'dist',
-  android: { backgroundColor: '#4fc3ea' },
+  android: { backgroundColor: '#b5532e' },
 };
 
 export default config;
