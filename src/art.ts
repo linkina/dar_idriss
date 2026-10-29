@@ -66,11 +66,11 @@ const ICONS: Record<string, string> = {
 };
 
 // Portraits: women wear a veil and caftan, men a jellaba (hood) or tarbouche.
-interface Look { bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; trim: string }
+interface Look { glasses?: boolean; bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; trim: string }
 const LOOKS: Record<string, Look> = {
   idriss: { bg: '#2e6fa8', robe: '#f5f0e6', hood: '#d9c49c', hair: '#2b1a10', beard: true, trim: '#d4a24c' },
   sarah: { bg: '#8e44ad', robe: '#1f8a70', veil: '#e79bb5', trim: '#f1c40f' },
-  fatima: { bg: '#c0392b', robe: '#6c3483', veil: '#f5f0e6', trim: '#d4a24c' },
+  fatima: { glasses: true, bg: '#c0392b', robe: '#6c3483', veil: '#f5f0e6', trim: '#d4a24c' },
   brahim: { bg: '#1f8a70', robe: '#5d6d7e', hood: '#5d6d7e', hair: '#2b1a10', trim: '#f5f0e6' },
   omar: { bg: '#d4a24c', robe: '#8d6e63', fez: true, beard: true, hair: '#555', trim: '#f5f0e6' },
   amr: { bg: '#e67e22', robe: '#3498db', hair: '#2b1a10', child: true, trim: '#f5f0e6' },
@@ -105,42 +105,46 @@ function portrait(l: Look, mode: 'face' | 'bust' | 'happy' = 'face'): string {
     face + head + beard + after + top + veilFront + `</g></g><circle cx="50" cy="50" r="47" fill="none" stroke="#fff" stroke-width="3"/>`;
 }
 
-// Half-body character for the counter: more detail than the round portrait.
+// Half-body character for the counter, in a soft chibi cartoon style:
+// big round head, large shiny eyes, flat colours with gentle shading.
 function bust(l: Look, happy: boolean): string {
-  const k = l.child ? 0.86 : 1;
-  const hx = 50;
-  const hy = l.child ? 44 : 40;
-  const skin = `<radialGradient id="sk" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#f6d3ae"/><stop offset="1" stop-color="#d9a073"/></radialGradient>`;
-  const cloth = `<linearGradient id="cl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient>`;
-  let out = `<defs>${skin}${cloth}</defs>`;
-  // Shoulders and robe.
-  const robe = `<path d="M6 100 Q8 70 30 64 Q50 60 70 64 Q92 70 94 100Z" fill="${l.robe}"/>`;
-  const trim = l.veil
-    ? `<path d="M50 66 L50 100" stroke="${l.trim}" stroke-width="3.5"/>` + [72, 79, 86, 93].map((y) => `<circle cx="50" cy="${y}" r="1.8" fill="${l.trim}"/>`).join('') + `<path d="M36 66 Q50 74 64 66" stroke="${l.trim}" stroke-width="3" fill="none"/>`
-    : `<path d="M42 64 L50 78 L58 64" stroke="${l.trim}" stroke-width="3" fill="none"/><path d="M50 78 L50 100" stroke="${l.trim}" stroke-width="2.5"/>`;
-  const hoodBack = l.hood || (!l.veil && !l.fez && !l.child) ? `<path d="M26 66 Q22 48 34 44 L66 44 Q78 48 74 66 Q50 74 26 66Z" fill="${l.hood ?? l.robe}"/><path d="M26 66 Q22 48 34 44 L66 44 Q78 48 74 66 Q50 74 26 66Z" fill="url(#cl)"/>` : '';
-  const veilBack = l.veil ? `<path d="M${hx - 24} ${hy + 4} Q${hx - 27} ${hy - 26} ${hx} ${hy - 27} Q${hx + 27} ${hy - 26} ${hx + 24} ${hy + 4} L${hx + 32} ${hy + 34} Q${hx} ${hy + 44} ${hx - 32} ${hy + 34}Z" fill="${l.veil}"/><path d="M${hx - 24} ${hy + 4} Q${hx - 27} ${hy - 26} ${hx} ${hy - 27} Q${hx + 27} ${hy - 26} ${hx + 24} ${hy + 4} L${hx + 32} ${hy + 34} Q${hx} ${hy + 44} ${hx - 32} ${hy + 34}Z" fill="url(#cl)"/>` : '';
-  out += hoodBack + robe + `<path d="M6 100 Q8 70 30 64 Q50 60 70 64 Q92 70 94 100Z" fill="url(#cl)"/>` + trim + veilBack;
-  // Head.
-  out += `<g transform="translate(${hx} ${hy}) scale(${k})">`;
-  out += `<rect x="-6" y="10" width="12" height="12" fill="#d9a073"/>`;
-  if (!l.veil) out += `<ellipse cx="-17" cy="0" rx="3.5" ry="5" fill="#e3ad80"/><ellipse cx="17" cy="0" rx="3.5" ry="5" fill="#e3ad80"/>`;
-  out += `<ellipse cx="0" cy="-1" rx="17" ry="19" fill="url(#sk)"/>`;
-  if (l.hair && !l.veil) out += `<path d="M-17 -4 Q-19 -24 0 -24 Q19 -24 17 -4 Q16 -14 8 -16 Q2 -12 -6 -16 Q-15 -14 -17 -4Z" fill="${l.hair}"/>`;
-  if (l.fez) out += `<path d="M-13 -15 L-10 -32 L10 -32 L13 -15Z" fill="#c0392b"/><ellipse cx="0" cy="-32" rx="10" ry="2.5" fill="#a93226"/><path d="M0 -32 Q9 -28 10 -19" stroke="#222" stroke-width="2" fill="none"/>`;
-  // Brows, eyes, nose, cheeks, mouth.
-  const brow = l.hair ?? '#5a3a22';
-  out += `<path d="M-11 -9 Q-7 -12 -3 -10 M3 -10 Q7 -12 11 -9" stroke="${brow}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const k = l.child ? 0.88 : 1;
+  const line = '#6b4a35';
+  const skin = '#f5cfa8';
+  const skinShade = '#e8b78e';
+  let out = `<ellipse cx="50" cy="98" rx="34" ry="5" fill="#000" opacity=".12"/>`;
+  // Small rounded body.
+  out += `<path d="M20 100 Q20 74 50 72 Q80 74 80 100Z" fill="${l.robe}" stroke="${line}" stroke-width="1.5"/>`;
+  out += `<path d="M62 76 Q78 80 80 100 L70 100 Q70 84 62 76Z" fill="#000" opacity=".1"/>`;
+  out += l.veil
+    ? `<path d="M50 76 L50 100" stroke="${l.trim}" stroke-width="3"/>` + [82, 89, 96].map((y) => `<circle cx="50" cy="${y}" r="1.7" fill="${l.trim}"/>`).join('')
+    : `<path d="M43 74 L50 84 L57 74" stroke="${l.trim}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`;
+  out += `<g transform="translate(50 ${l.child ? 44 : 41}) scale(${k})">`;
+  // Behind the head: veil, hood or nothing.
+  if (l.veil) out += `<path d="M-30 4 Q-32 -32 0 -32 Q32 -32 30 4 Q30 26 18 32 L-18 32 Q-30 26 -30 4Z" fill="${l.veil}" stroke="${line}" stroke-width="1.5"/><path d="M14 -28 Q30 -20 30 4 Q30 22 20 30 Q26 10 14 -28Z" fill="#000" opacity=".08"/>`;
+  else if (l.hood) out += `<path d="M-30 10 Q-32 -30 0 -36 Q32 -30 30 10 Q30 30 0 32 Q-30 30 -30 10Z" fill="${l.hood}" stroke="${line}" stroke-width="1.5"/>`;
+  // Ears (hidden by a veil), face.
+  if (!l.veil) out += `<circle cx="-24" cy="2" r="5" fill="${skin}" stroke="${line}" stroke-width="1.5"/><circle cx="24" cy="2" r="5" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+  const fr = l.veil ? 21 : 24;
+  out += `<ellipse cx="0" cy="2" rx="${fr}" ry="${fr - 1}" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
+  out += `<path d="M${fr * 0.55} ${-fr * 0.7} Q${fr + 1} 0 ${fr * 0.5} ${fr * 0.8} Q${fr * 0.8} 0 ${fr * 0.55} ${-fr * 0.7}Z" fill="${skinShade}" opacity=".7"/>`;
+  // Hair or headwear on top.
+  if (l.veil) out += `<path d="M-21 -2 Q-22 -22 0 -22 Q22 -22 21 -2 Q18 -14 0 -15 Q-18 -14 -21 -2Z" fill="${l.veil}"/>`;
+  else if (l.hair && !l.hood) out += `<path d="M-24 0 Q-27 -26 0 -27 Q27 -26 24 0 Q22 -12 12 -15 Q4 -9 -6 -14 Q-18 -12 -24 0Z" fill="${l.hair}" stroke="${line}" stroke-width="1.5"/>`;
+  else if (l.hair && l.hood) out += `<path d="M-18 -12 Q-10 -22 0 -21 Q10 -22 18 -12 Q8 -16 0 -14 Q-8 -16 -18 -12Z" fill="${l.hair}"/>`;
+  if (l.fez) out += `<path d="M-12 -21 L-9 -38 L9 -38 L12 -21Z" fill="#d64541" stroke="${line}" stroke-width="1.5"/><path d="M0 -38 Q9 -34 9 -24" stroke="#333" stroke-width="2" fill="none"/>`;
+  // Eyes: big, dark, two highlights. Happy eyes are closed arcs.
   out += happy
-    ? `<path d="M-10 -3 Q-7 -8 -3 -3 M3 -3 Q7 -8 10 -3" stroke="#2b1a10" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
-    : `<ellipse cx="-6.5" cy="-3" rx="3.4" ry="3.8" fill="#fff"/><ellipse cx="6.5" cy="-3" rx="3.4" ry="3.8" fill="#fff"/><circle cx="-6" cy="-2.6" r="2.4" fill="#5b3a1e"/><circle cx="7" cy="-2.6" r="2.4" fill="#5b3a1e"/><circle cx="-6" cy="-2.6" r="1.2" fill="#111"/><circle cx="7" cy="-2.6" r="1.2" fill="#111"/><circle cx="-5.2" cy="-3.6" r=".8" fill="#fff"/><circle cx="7.8" cy="-3.6" r=".8" fill="#fff"/>`;
-  out += `<path d="M0 0 Q-2 4 0 5" stroke="#b97d55" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
-  out += `<circle cx="-11" cy="5" r="3.5" fill="#f08a7a" opacity="${happy ? 0.65 : 0.35}"/><circle cx="11" cy="5" r="3.5" fill="#f08a7a" opacity="${happy ? 0.65 : 0.35}"/>`;
-  if (l.beard) out += `<path d="M-16 1 Q-15 20 0 22 Q15 20 16 1 Q12 9 7 9 Q0 7 -7 9 Q-12 9 -16 1Z" fill="${l.hair}"/>`;
+    ? `<path d="M-13 1 Q-9 -6 -5 1 M5 1 Q9 -6 13 1" stroke="#3a2416" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="-9" cy="0" rx="4.6" ry="6" fill="#3a2416"/><ellipse cx="9" cy="0" rx="4.6" ry="6" fill="#3a2416"/>` +
+      `<circle cx="-7.5" cy="-2.5" r="1.9" fill="#fff"/><circle cx="10.5" cy="-2.5" r="1.9" fill="#fff"/><circle cx="-10.5" cy="2.5" r=".9" fill="#fff"/><circle cx="7.5" cy="2.5" r=".9" fill="#fff"/>`;
+  out += `<path d="M-14 -9 Q-10 -11 -5 -9.5 M5 -9.5 Q10 -11 14 -9" stroke="${l.hair ?? '#7a5236'}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  if (l.glasses) out += `<circle cx="-9" cy="0" r="8" fill="#fff" fill-opacity=".15" stroke="#8a6a3a" stroke-width="2"/><circle cx="9" cy="0" r="8" fill="#fff" fill-opacity=".15" stroke="#8a6a3a" stroke-width="2"/><path d="M-1 0 L1 0" stroke="#8a6a3a" stroke-width="2"/>`;
+  out += `<ellipse cx="-15" cy="9" rx="4.5" ry="3" fill="#f59b8f" opacity=".55"/><ellipse cx="15" cy="9" rx="4.5" ry="3" fill="#f59b8f" opacity=".55"/>`;
+  if (l.beard) out += `<path d="M-20 6 Q-19 24 0 25 Q19 24 20 6 Q14 14 0 13 Q-14 14 -20 6Z" fill="${l.hair}" stroke="${line}" stroke-width="1.2"/>`;
   out += happy
-    ? `<path d="M-7 8 Q0 18 7 8Z" fill="#8a2a1a"/><path d="M-5.5 8.5 L5.5 8.5 L4.5 10.5 L-4.5 10.5Z" fill="#fff"/>`
-    : `<path d="M-5 9 Q0 13 5 9" stroke="#8a3a2a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
-  if (l.veil) out += `<path d="M-19 -2 Q-21 -24 0 -24 Q21 -24 19 -2 Q19 -20 0 -20 Q-19 -20 -19 -2Z" fill="${l.veil}"/><path d="M-19 -2 Q-21 -24 0 -24 Q21 -24 19 -2 Q19 -20 0 -20 Q-19 -20 -19 -2Z" fill="url(#cl)"/><path d="M-17 14 Q0 26 17 14" stroke="${l.veil}" stroke-width="5" fill="none"/>`;
+    ? `<path d="M-6 9 Q0 17 6 9Z" fill="#c0504d" stroke="${line}" stroke-width="1.2"/>`
+    : `<path d="M-4 10 Q0 13 4 10" stroke="${line}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
   out += `</g>`;
   return out;
 }
@@ -195,8 +199,8 @@ export function artEntries(): [string, string][] {
   for (const [k, b] of Object.entries(ICONS)) out.push([`icon-${k}`, svg(b, 64)]);
   for (const [k, l] of Object.entries(LOOKS)) {
     out.push([`face-${k}`, svg(portrait(l), 120)]);
-    out.push([`bust-${k}`, svg(bust(l, false), 200)]);
-    out.push([`happy-${k}`, svg(bust(l, true), 200)]);
+    out.push([`bust-${k}`, svg(bust(l, false), 200, false)]);
+    out.push([`happy-${k}`, svg(bust(l, true), 200, false)]);
   }
   return out;
 }

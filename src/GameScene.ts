@@ -154,14 +154,13 @@ export class GameScene extends Phaser.Scene {
     return sp;
   }
 
-  // Green halo under every object that a character is asking for.
+  // Green halo only under objects of orders that can be delivered right now.
   private drawGlows() {
     this.glows.forEach((g) => g.destroy());
     this.glows = [];
-    this.s.board.forEach((c, i) => {
-      if (c?.kind !== 'item') return;
-      const wanted = this.s.orders.some((o) => o.wants.some((w) => w.chain === c.chain && w.level === c.level));
-      if (!wanted) return;
+    const ready = new Set<number>();
+    for (const o of this.s.orders) this.findItems(o)?.forEach((i) => ready.add(i));
+    ready.forEach((i) => {
       const { x, y } = this.cellCenter(i);
       const g = this.add.image(x, y - 2, 'glowGreen').setDisplaySize(CELL - 2, CELL - 2).setDepth(1);
       this.tweens.add({ targets: g, alpha: 0.5, duration: 750, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
@@ -329,7 +328,7 @@ export class GameScene extends Phaser.Scene {
     for (let k = 0; k < 3; k++) {
       const cx = colW * k + colW / 2;
       this.add.image(cx, 100, 'arch').setOrigin(0.5, 0).setDisplaySize(220, 250);
-      const bust = this.add.image(cx, 296, `bust-${this.s.orders[k].who}`).setOrigin(0.5, 1).setDisplaySize(176, 176);
+      const bust = this.add.image(cx, 284, `bust-${this.s.orders[k].who}`).setOrigin(0.5, 1).setDisplaySize(176, 176);
       bust.setData('base', bust.scaleY);
       this.busts.push(bust);
       this.breathe(bust, k);
@@ -416,13 +415,13 @@ export class GameScene extends Phaser.Scene {
       targets: bust,
       tweens: [
         { scaleY: base * 0.9, scaleX: base * 1.08, duration: 110, ease: 'Quad.Out' },
-        { y: 266, scaleY: base * 1.06, scaleX: base * 0.96, duration: 200, ease: 'Quad.Out' },
-        { y: 296, scaleY: base, scaleX: base, duration: 200, ease: 'Bounce.Out' },
-        { y: 276, duration: 160, ease: 'Quad.Out', yoyo: true },
-        { alpha: 0, y: 320, duration: 260, delay: 350, ease: 'Quad.In' },
+        { y: 254, scaleY: base * 1.06, scaleX: base * 0.96, duration: 200, ease: 'Quad.Out' },
+        { y: 284, scaleY: base, scaleX: base, duration: 200, ease: 'Bounce.Out' },
+        { y: 264, duration: 160, ease: 'Quad.Out', yoyo: true },
+        { alpha: 0, y: 308, duration: 260, delay: 350, ease: 'Quad.In' },
       ],
       onComplete: () => {
-        bust.setTexture(`bust-${next}`).setAlpha(0).setY(296);
+        bust.setTexture(`bust-${next}`).setAlpha(0).setY(284);
         this.tweens.add({ targets: bust, alpha: 1, duration: 300, onComplete: () => this.breathe(bust, k) });
       },
     });
