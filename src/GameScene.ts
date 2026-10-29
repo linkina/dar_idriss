@@ -32,8 +32,11 @@ export class GameScene extends Phaser.Scene {
   private orderLayer!: Phaser.GameObjects.Container;
   private dragging = false;
   private glows: Phaser.GameObjects.Image[] = [];
+  private genDecor: Phaser.GameObjects.GameObject[] = [];
   private selRays!: Phaser.GameObjects.Image;
   private busts: Phaser.GameObjects.Image[] = [];
+  private arches: Phaser.GameObjects.Image[] = [];
+  private halos: Phaser.GameObjects.Container[] = [];
 
   constructor() {
     super('game');
@@ -133,6 +136,8 @@ export class GameScene extends Phaser.Scene {
 
   private renderBoard() {
     this.sprites.forEach((sp) => sp?.destroy());
+    this.genDecor.forEach((d) => d.destroy());
+    this.genDecor = [];
     this.sprites = this.s.board.map((cell, i) => (cell ? this.makeSprite(cell, i) : null));
     this.drawSelection();
     this.drawGlows();
@@ -142,6 +147,13 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = this.cellCenter(i);
     const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(CELL + 2, CELL + 2).setDepth(2);
     if (cell.kind === 'gen') {
+      // Generators sit on a golden tile with a twinkle, so they read apart from objects.
+      const tile = this.add.image(x, y, 'genTile').setDepth(1.1).setAlpha(0.9);
+      const twinkle = this.add.image(x + 30, y - 30, 'sparkle').setDepth(3).setScale(0).setAngle(15);
+      this.tweens.add({ targets: twinkle, scale: 0.8, angle: 105, duration: 500, yoyo: true, repeat: -1, repeatDelay: 1800, delay: (i * 211) % 2000 });
+      this.tweens.add({ targets: tile, alpha: 0.6, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      this.genDecor.push(tile, twinkle);
+      sp.setData('decor', [tile, twinkle]);
       // Generators breathe gently so the player sees they can be tapped.
       this.tweens.add({ targets: sp, scaleY: sp.scaleY * 1.05, scaleX: sp.scaleX * 0.97, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut', delay: i * 37 });
     }
@@ -153,6 +165,7 @@ export class GameScene extends Phaser.Scene {
     sp.on('dragstart', () => {
       this.dragging = true;
       this.tweens.killTweensOf(sp);
+      (sp.getData('decor') as Phaser.GameObjects.Image[] | undefined)?.forEach((d) => d.setVisible(false));
       sp.setDepth(10).setDisplaySize(CELL + 16, CELL + 16);
       this.sfx.tap();
     });
@@ -172,8 +185,9 @@ export class GameScene extends Phaser.Scene {
     for (const o of this.s.orders) this.findItems(o)?.forEach((i) => ready.add(i));
     ready.forEach((i) => {
       const { x, y } = this.cellCenter(i);
-      const g = this.add.image(x, y - 2, 'glowGreen').setDisplaySize(CELL - 2, CELL - 2).setDepth(1);
-      this.tweens.add({ targets: g, alpha: 0.5, duration: 750, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      // The cell itself turns light green and blinks.
+      const g = this.add.image(x, y, 'tileGreen').setDisplaySize(CELL, CELL).setDepth(1);
+      this.tweens.add({ targets: g, alpha: 0.15, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
       this.glows.push(g);
     });
   }
@@ -338,7 +352,15 @@ export class GameScene extends Phaser.Scene {
     const colW = W / 3;
     for (let k = 0; k < 3; k++) {
       const cx = colW * k + colW / 2;
-      this.add.image(cx, 100, 'arch').setOrigin(0.5, 0).setDisplaySize(220, 250);
+      // Light behind the arch when this character's order can be delivered.
+      const halo = this.add.container(cx, 200).setVisible(false);
+      const rays = this.add.image(0, 0, 'rays').setDisplaySize(330, 330).setAlpha(0.9);
+      const glow = this.add.image(0, 0, 'readyGlow').setDisplaySize(300, 300);
+      halo.add([glow, rays]);
+      this.tweens.add({ targets: rays, angle: 360, duration: 8000, repeat: -1 });
+      this.tweens.add({ targets: glow, scale: glow.scale * 1.12, alpha: 0.7, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+      this.halos.push(halo);
+      this.arches.push(this.add.image(cx, 100, `arch-${this.s.orders[k].who}`).setOrigin(0.5, 0).setDisplaySize(220, 250));
       const bust = this.add.image(cx, 284, `bust-${this.s.orders[k].who}`).setOrigin(0.5, 1).setDisplaySize(176, 176);
       bust.setData('base', bust.scaleY);
       this.busts.push(bust);
@@ -376,12 +398,12 @@ export class GameScene extends Phaser.Scene {
         }
       });
 
+      this.halos[k]?.setVisible(ready);
+      this.arches[k]?.setTint(ready ? 0xfffbe0 : 0xffffff);
       if (ready) {
-        const btn = this.add.container(cx + 50, 236);
-        btn.add(this.add.image(0, 0, 'btnGreen').setDisplaySize(112, 42));
-        btn.add(this.add.text(0, -3, 'Livrer', { fontFamily: FONT, fontSize: '20px', color: '#fff', fontStyle: 'bold', stroke: '#146b38', strokeThickness: 4 }).setOrigin(0.5));
-        this.tweens.add({ targets: btn, scale: 1.08, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-        this.orderLayer.add(btn);
+        const check = this.add.image(cx + 62, 214, 'bigCheck').setDisplaySize(84, 88);
+        this.tweens.add({ targets: check, scale: check.scale * 1.12, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        this.orderLayer.add(check);
       }
       const hit = this.add.zone(colW * k, 100, colW, 250).setOrigin(0).setInteractive({ useHandCursor: ready });
       hit.on('pointerup', () => (ready ? this.deliver(k) : this.say(`${who.name} attend : ${o.wants.map((w) => CHAINS[w.chain].items[w.level - 1]).join(' et ')}.`)));
@@ -433,6 +455,7 @@ export class GameScene extends Phaser.Scene {
       ],
       onComplete: () => {
         bust.setTexture(`bust-${next}`).setAlpha(0).setY(284);
+        this.arches[k].setTexture(`arch-${next}`);
         this.tweens.add({ targets: bust, alpha: 1, duration: 300, onComplete: () => this.breathe(bust, k) });
       },
     });

@@ -221,10 +221,7 @@ const UI: Record<string, string> = {
   tray: raw(220, 96, `<defs><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dff1fa"/></linearGradient></defs>
     <rect x="2" y="10" width="216" height="84" rx="22" fill="#2a7fb8" opacity=".35"/><rect x="0" y="4" width="220" height="84" rx="22" fill="#3cb4e0"/>
     <rect x="4" y="4" width="212" height="78" rx="20" fill="url(#p)"/><rect x="14" y="8" width="192" height="16" rx="8" fill="#fff"/>`),
-  arch: raw(220, 250, `<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7e8"/><stop offset="1" stop-color="#f3dfbd"/></linearGradient></defs>
-    <path d="M10 250 L10 110 Q10 30 60 18 Q110 0 160 18 Q210 30 210 110 L210 250Z" fill="#e8bf62"/>
-    <path d="M20 250 L20 112 Q20 42 66 30 Q110 14 154 30 Q200 42 200 112 L200 250Z" fill="url(#a)"/>
-    <path d="M36 250 L36 118 Q36 60 74 48 Q110 36 146 48 Q184 60 184 118 L184 250Z" fill="#9fdcef" opacity=".55"/>`),
+
   btnGreen: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd38a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
     <rect x="0" y="6" width="192" height="48" rx="16" fill="#146b38"/><rect x="0" y="0" width="192" height="48" rx="16" fill="url(#g)"/><rect x="8" y="4" width="176" height="16" rx="8" fill="#fff" opacity=".35"/>`),
   btnGrey: raw(192, 54, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9cdb8"/><stop offset="1" stop-color="#b3a58c"/></linearGradient></defs>
@@ -233,6 +230,14 @@ const UI: Record<string, string> = {
     <rect x="2" y="5" width="226" height="54" rx="27" fill="#2a7fb8" opacity=".35"/><rect x="2" y="2" width="226" height="52" rx="26" fill="url(#g)" stroke="#3cb4e0" stroke-width="3"/><rect x="16" y="6" width="198" height="12" rx="6" fill="#fff"/>`),
   rays: raw(256, 256, `<defs><radialGradient id="ry" cx="128" cy="128" r="128" gradientUnits="userSpaceOnUse"><stop offset=".1" stop-color="#fff6c2" stop-opacity="1"/><stop offset=".55" stop-color="#ffd54a" stop-opacity=".75"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient>
     <radialGradient id="c"><stop offset="0" stop-color="#fffbe6"/><stop offset=".5" stop-color="#ffe680" stop-opacity=".8"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/></radialGradient></defs><path d="M128 128 L255.0 112.4 L255.0 143.6Z" fill="url(#ry)"/><path d="M128 128 L245.8 178.0 L230.2 205.0Z" fill="url(#ry)"/><path d="M128 128 L205.0 230.2 L178.0 245.8Z" fill="url(#ry)"/><path d="M128 128 L143.6 255.0 L112.4 255.0Z" fill="url(#ry)"/><path d="M128 128 L78.0 245.8 L51.0 230.2Z" fill="url(#ry)"/><path d="M128 128 L25.8 205.0 L10.2 178.0Z" fill="url(#ry)"/><path d="M128 128 L1.0 143.6 L1.0 112.4Z" fill="url(#ry)"/><path d="M128 128 L10.2 78.0 L25.8 51.0Z" fill="url(#ry)"/><path d="M128 128 L51.0 25.8 L78.0 10.2Z" fill="url(#ry)"/><path d="M128 128 L112.4 1.0 L143.6 1.0Z" fill="url(#ry)"/><path d="M128 128 L178.0 10.2 L205.0 25.8Z" fill="url(#ry)"/><path d="M128 128 L230.2 51.0 L245.8 78.0Z" fill="url(#ry)"/><circle cx="128" cy="128" r="70" fill="url(#c)"/>`),
+  bigCheck: raw(110, 116, `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6ee89a"/><stop offset="1" stop-color="#1e9a52"/></linearGradient></defs>
+    <rect x="4" y="10" width="102" height="102" rx="26" fill="#146b38"/><rect x="4" y="4" width="102" height="102" rx="26" fill="url(#g)" stroke="#fff" stroke-width="5"/>
+    <rect x="16" y="12" width="78" height="24" rx="12" fill="#fff" opacity=".35"/><path d="M30 56 L48 74 L82 36" stroke="#fff" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`),
+  readyGlow: raw(256, 256, `<defs><radialGradient id="r"><stop offset=".25" stop-color="#fff9c4" stop-opacity="1"/><stop offset=".6" stop-color="#7dffb0" stop-opacity=".7"/><stop offset="1" stop-color="#2ecc71" stop-opacity="0"/></radialGradient></defs><circle cx="128" cy="128" r="128" fill="url(#r)"/>`),
+  tileGreen: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9ffe6"/><stop offset="1" stop-color="#8eeab0"/></linearGradient></defs>
+    <rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)" stroke="#2ecc71" stroke-width="3"/><rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".6"/>`),
+  genTile: raw(96, 96, `<defs><radialGradient id="g" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fff6c8"/><stop offset=".7" stop-color="#ffe08a"/><stop offset="1" stop-color="#ffc94a"/></radialGradient></defs>
+    <rect x="3" y="3" width="90" height="86" rx="16" fill="url(#g)"/><rect x="5" y="5" width="86" height="82" rx="14" fill="none" stroke="#f5b72e" stroke-width="3"/><rect x="10" y="8" width="76" height="16" rx="8" fill="#fff" opacity=".6"/>`),
   sparkle: raw(32, 32, `<path d="M16 0 L19 13 L32 16 L19 19 L16 32 L13 19 L0 16 L13 13Z" fill="#fff6c8"/><circle cx="16" cy="16" r="4" fill="#fff"/>`),
   glowGreen: raw(128, 128, `<defs><radialGradient id="r"><stop offset=".3" stop-color="#1ec760" stop-opacity=".85"/><stop offset=".62" stop-color="#27ae60" stop-opacity=".55"/><stop offset="1" stop-color="#27ae60" stop-opacity="0"/></radialGradient></defs><rect x="6" y="6" width="116" height="116" rx="26" fill="url(#r)"/><rect x="10" y="10" width="108" height="108" rx="22" fill="none" stroke="#27ae60" stroke-width="5" opacity=".9"/>`),
   glow: raw(128, 128, `<defs><radialGradient id="r"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs><circle cx="64" cy="64" r="64" fill="url(#r)"/>`),
@@ -271,9 +276,27 @@ const ROOMS: Record<string, string> = {
   'salon-table': R(`<ellipse cx="320" cy="400" rx="130" ry="26" fill="#b4501a"/><ellipse cx="320" cy="392" rx="130" ry="26" fill="#f0802a"/><ellipse cx="320" cy="390" rx="104" ry="18" fill="#e08e4a"/><path d="M300 386 Q298 350 320 346 Q342 350 340 386Z" fill="#cfd5dc" stroke="#7d8793" stroke-width="3"/><path d="M340 368 Q356 362 358 348" stroke="#7d8793" stroke-width="4" fill="none"/>` + [250, 274, 366, 390].map((x) => `<path d="M${x - 8} 388 L${x + 8} 388 L${x + 6} 370 L${x - 6} 370Z" fill="#f3c86b" stroke="#b8862f" stroke-width="2"/>`).join('')),
 };
 
+// One arch per character, each with its own light background colour.
+const ARCH_COLORS: Record<string, [string, string]> = {
+  idriss: ['#bfe3ff', '#7cc4f5'],
+  sarah: ['#ffd3e6', '#f78fbd'],
+  fatima: ['#e3d5ff', '#b394ef'],
+  brahim: ['#c8f5dd', '#6fd3a0'],
+  omar: ['#ffe2bf', '#ffb35c'],
+  amr: ['#fff6b8', '#ffd84a'],
+  ali: ['#ffd4cc', '#ff8f7a'],
+};
+const arch = ([top, bottom]: [string, string]) => raw(220, 250, `<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7e8"/><stop offset="1" stop-color="#f3dfbd"/></linearGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>
+    <path d="M10 250 L10 110 Q10 30 60 18 Q110 0 160 18 Q210 30 210 110 L210 250Z" fill="#e8bf62"/>
+    <path d="M20 250 L20 112 Q20 42 66 30 Q110 14 154 30 Q200 42 200 112 L200 250Z" fill="url(#a)"/>
+    <path d="M36 250 L36 118 Q36 60 74 48 Q110 36 146 48 Q184 60 184 118 L184 250Z" fill="url(#b)"/>
+    <path d="M52 110 Q60 70 96 60" stroke="#fff" stroke-width="6" fill="none" opacity=".5" stroke-linecap="round"/>`);
+
 export function artEntries(): [string, string][] {
   const out: [string, string][] = [['zellige', ZELLIGE], ['courtyard', COURTYARD]];
   for (const [k, b] of Object.entries(UI)) out.push([k, b]);
+  for (const [k, c] of Object.entries(ARCH_COLORS)) out.push([`arch-${k}`, arch(c)]);
   for (const [k, b] of Object.entries(ROOMS)) out.push([`room-${k}`, b]);
   for (const [chain, list] of Object.entries(ITEMS)) list.forEach((b, i) => out.push([`${chain}-${i + 1}`, svg(b)]));
   for (const [chain, b] of Object.entries(GENERATORS)) out.push([`gen-${chain}`, svg(b)]);
