@@ -11,9 +11,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
     "phaser": "^3.90.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.10",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-singlefile": "^2.2.0"
