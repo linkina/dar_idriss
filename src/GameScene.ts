@@ -17,6 +17,7 @@ const CHAIN_COLOR: Record<string, number> = {
   menthe: 0x22b35e, pain: 0xf39c12, couture: 0xe84393, souk: 0x8e44ad,
   poterie: 0x2471d6, orangers: 0xff7f11, cuivre: 0xc0392b, hammam: 0x14b8a6,
 };
+const HINT_DELAY_MS = 6000;
 const hex = (c: number) => '#' + c.toString(16).padStart(6, '0');
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
 const INK = '#1a2f6b';
@@ -47,6 +48,9 @@ export class GameScene extends Phaser.Scene {
   private genDecor: Phaser.GameObjects.GameObject[] = [];
   private selFrame!: Phaser.GameObjects.Container;
   private infoBtn!: Phaser.GameObjects.Container;
+  private titleW = 0;
+  private lastAction = Date.now();
+  private hint: Phaser.GameObjects.Image[] = [];
   private busts: Phaser.GameObjects.Image[] = [];
   private arches: Phaser.GameObjects.Image[] = [];
   private halos: Phaser.GameObjects.Container[] = [];
@@ -61,6 +65,10 @@ export class GameScene extends Phaser.Scene {
     this.sfx.enabled = this.s.sound;
     this.input.dragDistanceThreshold = 8;
     this.input.once('pointerdown', () => this.sfx.start());
+    this.input.on('pointerdown', () => {
+      this.lastAction = Date.now();
+      this.stopHint();
+    });
 
     this.add.image(0, 0, 'courtyard').setOrigin(0).setDisplaySize(W, H);
     this.drawTopBar();
@@ -103,7 +111,10 @@ export class GameScene extends Phaser.Scene {
     this.renderBoard();
     this.renderOrders();
     this.refreshHud();
-    this.time.addEvent({ delay: 1000, loop: true, callback: () => this.refreshHud() });
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      this.refreshHud();
+      this.maybeHint();
+    } });
   }
 
   // ---------- Drawing ----------
@@ -165,6 +176,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderBoard() {
+    this.hint = [];
     this.sprites.forEach((sp) => sp?.destroy());
     this.genDecor.forEach((d) => d.destroy());
     this.genDecor = [];
@@ -177,13 +189,16 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = this.cellCenter(i);
     const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(CELL + 2, CELL + 2).setDepth(2);
     if (cell.kind === 'gen') {
-      // Generators sit on a golden tile with a twinkle, so they read apart from objects.
-      const tile = this.add.image(x, y, 'genTile').setDepth(1.1).setAlpha(0.9);
-      const twinkle = this.add.image(x + 30, y - 30, 'sparkle').setDepth(3).setScale(0).setAngle(15);
-      this.tweens.add({ targets: twinkle, scale: 0.8, angle: 105, duration: 500, yoyo: true, repeat: -1, repeatDelay: 1800, delay: (i * 211) % 2000 });
-      this.tweens.add({ targets: tile, alpha: 0.6, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-      this.genDecor.push(tile, twinkle);
-      sp.setData('decor', [tile, twinkle]);
+      // Generators carry a pink energy badge in the corner: tapping them costs energy.
+      const badge = this.add.image(x + CELL / 2 - 16, y + CELL / 2 - 16, 'genBadge').setDisplaySize(34, 34).setDepth(3);
+      // Small white stars twinkle around it, each at its own pace.
+      const stars = [[-30, -32], [32, -10], [-34, 18]].map(([dx, dy], n) => {
+        const st = this.add.image(x + dx, y + dy, 'starWhite').setDepth(3).setScale(0);
+        this.tweens.add({ targets: st, scale: 0.7 + 0.2 * n, angle: 90, duration: 450, yoyo: true, repeat: -1, repeatDelay: 900 + n * 350, delay: (i * 173 + n * 600) % 1800 });
+        return st;
+      });
+      this.genDecor.push(badge, ...stars);
+      sp.setData('decor', [badge, ...stars]);
       // Generators breathe gently so the player sees they can be tapped.
       this.tweens.add({ targets: sp, scaleY: sp.scaleY * 1.05, scaleX: sp.scaleX * 0.97, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut', delay: i * 37 });
     }
@@ -230,7 +245,10 @@ export class GameScene extends Phaser.Scene {
     if (this.selected < 0 || !this.s.board[this.selected]) return;
     const { x, y } = this.cellCenter(this.selected);
     this.selFrame.setPosition(x, y - 1).setVisible(true);
-    this.infoBtn.setPosition(x + CELL / 2 - 8, y - CELL / 2 + 8).setVisible(true);
+    // The "i" sits in the bottom panel, next to the description.
+    if (TALL) this.infoBtn.setPosition(W / 2 + this.titleW / 2 + 28, this.infoHead.y + 20);
+    else this.infoBtn.setPosition(W - 136, PANEL_Y + PANEL_H / 2 + 2);
+    this.infoBtn.setVisible(true);
   }
 
   private pop(i: number) {
@@ -272,8 +290,8 @@ export class GameScene extends Phaser.Scene {
     const pad = Math.max(0, (PANEL_H - 260) / 2);
     this.infoHead = this.add.container(midX, PANEL_Y + 18 + pad);
     const textY = TALL ? PANEL_Y + 186 + pad : PANEL_Y + PANEL_H / 2 + 3;
-    this.info = this.add.text(midX, textY, '', {
-      fontFamily: FONT, fontSize: TALL ? '21px' : '18px', color: INK, align: 'center', wordWrap: { width: midW - 10 }, lineSpacing: 2,
+    this.info = this.add.text(TALL ? midX : midX - 25, textY, '', {
+      fontFamily: FONT, fontSize: TALL ? '21px' : '18px', color: INK, align: 'center', wordWrap: { width: TALL ? midW - 10 : midW - 60 }, lineSpacing: 2,
     }).setOrigin(0.5, TALL ? 0 : 0.5);
   }
 
@@ -297,6 +315,7 @@ export class GameScene extends Phaser.Scene {
     const pillW = tag.length * 10 + 30;
     const pill = this.add.graphics();
     pill.fillStyle(color, 1).fillRoundedRect(-pillW / 2, 42, pillW, 30, 15);
+    this.titleW = title.width;
     head.add([title, pill, this.add.text(0, 57, tag, { fontFamily: FONT, fontSize: '17px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5)]);
     // The family, from level 1 to the last, current level highlighted.
     const step = 76;
@@ -472,9 +491,13 @@ export class GameScene extends Phaser.Scene {
       const ready = this.findItems(o) !== null;
       const who = CHARACTERS.find((c) => c.id === o.who)!;
       this.orderLayer.add(this.add.image(cx, 256, 'tray').setOrigin(0.5, 0).setDisplaySize(220, 96));
-      this.orderLayer.add(this.add.text(cx - 96, 266, who.name, { fontFamily: FONT, fontSize: '17px', color: '#b5532e', fontStyle: 'bold' }));
-      this.orderLayer.add(this.add.image(cx + 58, 276, 'icon-coin').setDisplaySize(22, 22));
-      this.orderLayer.add(this.add.text(cx + 72, 266, `+${o.coins}`, { fontFamily: FONT, fontSize: '17px', color: INK, fontStyle: 'bold' }));
+      this.orderLayer.add(this.add.text(cx - 96, 266, who.name, { fontFamily: FONT, fontSize: '16px', color: '#b5532e', fontStyle: 'bold' }));
+      // Rewards: coins and stars.
+      const reward = { fontFamily: FONT, fontSize: '16px', color: INK, fontStyle: 'bold' };
+      this.orderLayer.add(this.add.image(cx + 26, 276, 'icon-coin').setDisplaySize(20, 20));
+      this.orderLayer.add(this.add.text(cx + 37, 267, `${o.coins}`, reward));
+      this.orderLayer.add(this.add.image(cx + 74, 275, 'icon-star').setDisplaySize(22, 22));
+      this.orderLayer.add(this.add.text(cx + 86, 267, `${o.stars ?? 1}`, reward));
 
       const used = new Set<number>();
       o.wants.forEach((w, n) => {
@@ -513,10 +536,11 @@ export class GameScene extends Phaser.Scene {
       if (sp) this.tweens.add({ targets: sp, y: 300, x: cx, alpha: 0, duration: 380, ease: 'Quad.In', onComplete: () => sp.destroy() });
     });
     this.s.coins += o.coins;
-    this.s.stars += 1;
+    const stars = o.stars ?? 1;
+    this.s.stars += stars;
     this.sfx.deliver();
     this.sparkles.explode(28, cx, 200);
-    this.float(cx, 170, `+${o.coins}  +1 étoile`, '#ffd54a');
+    this.float(cx, 170, `+${o.coins}  +${stars} étoile${stars > 1 ? 's' : ''}`, '#ffd54a');
     const who = CHARACTERS.find((c) => c.id === o.who)!;
     this.say(`${who.name} te remercie ! Les étoiles serviront à rénover le riad.`);
     this.s.orders[k] = makeOrder(this.s);
@@ -607,6 +631,41 @@ export class GameScene extends Phaser.Scene {
     }
     if (placed) save(this.s);
     return placed;
+  }
+
+  // ---------- Hint ----------
+
+  // After a few idle seconds, two identical objects nudge toward each other.
+  private maybeHint() {
+    if (this.hint.length || !this.input.enabled || this.dragging || Date.now() - this.lastAction < HINT_DELAY_MS) return;
+    const b = this.s.board;
+    for (let i = 0; i < b.length; i++) {
+      const a = b[i];
+      if (a?.kind !== 'item' || a.level >= MAX_LEVEL) continue;
+      const j = b.findIndex((c, k) => k > i && c?.kind === 'item' && c.chain === a.chain && c.level === a.level);
+      const si = this.sprites[i];
+      const sj = this.sprites[j];
+      if (j < 0 || !si || !sj) continue;
+      this.hint = [si, sj];
+      for (const [sp, other] of [[si, sj], [sj, si]]) {
+        const ang = Math.atan2(other.y - sp.y, other.x - sp.x);
+        this.tweens.add({
+          targets: sp, x: sp.x + Math.cos(ang) * 12, y: sp.y + Math.sin(ang) * 12, duration: 260,
+          yoyo: true, repeat: 1, repeatDelay: 60, hold: 40, loop: -1, loopDelay: 1200, ease: 'Sine.InOut',
+        });
+      }
+      return;
+    }
+  }
+
+  private stopHint() {
+    for (const sp of this.hint) {
+      if (!sp.active) continue;
+      this.tweens.killTweensOf(sp);
+      const { x, y } = this.cellCenter(sp.getData('cell'));
+      sp.setPosition(x, y - 2);
+    }
+    this.hint = [];
   }
 
   // ---------- HUD ----------

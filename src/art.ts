@@ -15,11 +15,26 @@ const FX = `<defs><filter id="fx" x="-25%" y="-25%" width="150%" height="150%" c
 <feComposite in="lit" in2="SourceAlpha" operator="in" result="litIn"/>
 <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="sb"/><feOffset in="sb" dx="1.5" dy="4" result="so"/>
 <feFlood flood-color="#2b1606" flood-opacity=".38"/><feComposite in2="so" operator="in" result="shadow"/>
-<feMorphology in="SourceAlpha" operator="dilate" radius="1.7" result="dil"/><feFlood flood-color="#3a2416"/><feComposite in2="dil" operator="in" result="outline"/>
+<feMorphology in="SourceAlpha" operator="dilate" radius="2.4" result="dil"/><feFlood flood-color="#24140a"/><feComposite in2="dil" operator="in" result="outline"/>
 <feMerge><feMergeNode in="shadow"/><feMergeNode in="outline"/><feMergeNode in="litIn"/></feMerge></filter></defs>`;
 
+const INK_LINE = '#24140a';
+
+// Cartoon line art: every solid shape gets a crisp dark contour. Highlights
+// (shapes with opacity) and tiny dots are left as they are.
+const inkLines = (body: string) =>
+  body.replace(/<(path|rect|ellipse|circle|polygon)\b([^>]*?)\/>/g, (tag, name: string, attrs: string) => {
+    const fill = /\bfill="([^"]*)"/.exec(attrs)?.[1];
+    if (!fill || fill === 'none' || /\bopacity=/.test(attrs)) return tag;
+    const r = Number(/\br="([\d.]+)"/.exec(attrs)?.[1] ?? /\brx="([\d.]+)"/.exec(attrs)?.[1] ?? 99);
+    if ((name === 'circle' || name === 'ellipse') && r < 3) return tag;
+    const width = Math.max(2.2, Number(/\bstroke-width="([\d.]+)"/.exec(attrs)?.[1] ?? 0));
+    const rest = attrs.replace(/\s*\bstroke(-width|-linejoin)?="[^"]*"/g, '');
+    return `<${name}${rest} stroke="${INK_LINE}" stroke-width="${width}" stroke-linejoin="round"/>`;
+  });
+
 const svg = (body: string, size = 128, fx = true) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${fx ? FX + `<g filter="url(#fx)">${body}</g>` : body}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${fx ? FX + `<g filter="url(#fx)">${inkLines(body)}</g>` : body}</svg>`;
 
 const leaf = (x: number, y: number, r: number, c = '#3f9b5a') =>
   `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 0 C8 -10 22 -10 28 0 C22 10 8 10 0 0Z" fill="${c}" stroke="#25663a" stroke-width="1.5"/><path d="M2 0 L24 0" stroke="#25663a" stroke-width="1.2"/></g>`;
@@ -79,7 +94,7 @@ const ITEMS: Record<string, string[]> = {
     `<rect x="22" y="28" width="56" height="48" rx="4" fill="#d9735b" transform="rotate(-8 50 52)"/><path d="M28 36 L70 30" stroke="#ffb4a0" stroke-width="3" transform="rotate(-8 50 52)"/>`,
     `<path d="M32 26 L68 26 L62 82 L38 82Z" fill="#f0802a"/><path d="M34 34 L66 34" stroke="#f0a868" stroke-width="3"/><path d="M35 50 L65 50 L64 62 L36 62Z" fill="#1abc9c"/><ellipse cx="50" cy="26" rx="18" ry="4" fill="#b4501a"/>`,
     `<path d="M50 10 L50 20" stroke="#b4501a" stroke-width="3"/><path d="M36 30 L64 30 L58 20 L42 20Z" fill="#f0802a"/><path d="M34 30 L66 30 L62 76 L38 76Z" fill="#f7dc6f"/><path d="M34 30 L66 30 L62 76 L38 76Z M50 30 L50 76" fill="none" stroke="#f0802a" stroke-width="3"/><path d="M36 76 L64 76 L58 86 L42 86Z" fill="#f0802a"/>`,
-    `<circle cx="50" cy="52" r="34" fill="#ff6b6b" opacity=".35"/><path d="M50 8 L50 18" stroke="#b4501a" stroke-width="3"/><path d="M50 18 Q30 30 30 52 Q30 76 50 86 Q70 76 70 52 Q70 30 50 18Z" fill="#f0802a"/>` + [[42, 40], [58, 40], [50, 50], [40, 60], [60, 60], [50, 70], [44, 76], [56, 76]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#ff4d6d"/>`).join(''),
+    `<path d="M50 8 L50 18" stroke="#b4501a" stroke-width="3"/><path d="M50 18 Q30 30 30 52 Q30 76 50 86 Q70 76 70 52 Q70 30 50 18Z" fill="#f0802a"/>` + [[42, 40], [58, 40], [50, 50], [40, 60], [60, 60], [50, 70], [44, 76], [56, 76]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#ff4d6d"/>`).join(''),
     `<ellipse cx="50" cy="56" rx="42" ry="28" fill="#c9a227"/><ellipse cx="50" cy="54" rx="36" ry="22" fill="#f5d142"/><ellipse cx="50" cy="54" rx="24" ry="14" fill="none" stroke="#b4501a" stroke-width="2"/><path d="M50 42 L56 54 L50 66 L44 54Z M30 54 L50 48 L70 54 L50 60Z" fill="none" stroke="#b4501a" stroke-width="2"/>`,
     `<path d="M50 6 L50 22" stroke="#b4501a" stroke-width="3"/><path d="M30 30 Q50 18 70 30 L76 46 L24 46Z" fill="#f0802a"/>` + [18, 34, 50, 66, 82].map((x) => `<path d="M${x} 50 L${x} 62" stroke="#b4501a" stroke-width="2"/><path d="M${x - 6} 62 L${x + 6} 62 L${x + 4} 78 L${x - 4} 78Z" fill="${['#2ecc71', '#e74c3c', '#3498db', '#f1c40f', '#9b59b6'][(x - 18) / 16]}" stroke="#f0802a" stroke-width="2"/>`).join('') + `<path d="M14 48 Q50 56 86 48" stroke="#f0802a" stroke-width="4" fill="none"/>`,
   ],
@@ -119,7 +134,7 @@ const ICONS: Record<string, string> = {
 };
 
 // Portraits: women wear a veil and caftan, men a jellaba (hood) or tarbouche.
-interface Look { glasses?: boolean; bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; trim: string }
+interface Look { glasses?: boolean; bg: string; robe: string; veil?: string; hood?: string; fez?: boolean; hair?: string; beard?: boolean; child?: boolean; long?: boolean; pigtails?: boolean; trim: string }
 const LOOKS: Record<string, Look> = {
   idriss: { bg: '#2e6fa8', robe: '#f5f0e6', hood: '#d9c49c', hair: '#2b1a10', beard: true, trim: '#d4a24c' },
   sarah: { bg: '#8e44ad', robe: '#1f8a70', veil: '#e79bb5', trim: '#f1c40f' },
@@ -128,6 +143,13 @@ const LOOKS: Record<string, Look> = {
   omar: { bg: '#d4a24c', robe: '#8d6e63', fez: true, beard: true, hair: '#555', trim: '#f5f0e6' },
   amr: { bg: '#e67e22', robe: '#3498db', hair: '#2b1a10', child: true, trim: '#f5f0e6' },
   ali: { bg: '#27ae60', robe: '#e74c3c', hair: '#3b2412', child: true, trim: '#f5f0e6' },
+  wafa: { bg: '#ff6f91', robe: '#ff6f91', hair: '#3b2412', long: true, trim: '#f5d142' },
+  ghizlane: { bg: '#ff9f43', robe: '#2471d6', veil: '#ff9f43', trim: '#f5d142' },
+  samira: { bg: '#38bdf8', robe: '#c2410c', veil: '#7fd1ff', trim: '#f5d142' },
+  abdellah: { bg: '#8e5a2b', robe: '#a0522d', hood: '#a0522d', hair: '#2b1a10', beard: true, trim: '#f5d142' },
+  amar: { bg: '#2e8b57', robe: '#2e8b57', hair: '#2b1a10', trim: '#f5f0e6' },
+  abir: { bg: '#e84393', robe: '#e84393', hair: '#5a3418', long: true, child: true, trim: '#fff' },
+  tasnim: { bg: '#14b8a6', robe: '#14b8a6', hair: '#2b1a10', pigtails: true, child: true, trim: '#ffd23f' },
 };
 
 function portrait(l: Look, mode: 'face' | 'bust' | 'happy' = 'face'): string {
@@ -169,13 +191,16 @@ function bust(l: Look, happy: boolean): string {
   // Small rounded body.
   out += `<path d="M20 100 Q20 74 50 72 Q80 74 80 100Z" fill="${l.robe}" stroke="${line}" stroke-width="1.5"/>`;
   out += `<path d="M62 76 Q78 80 80 100 L70 100 Q70 84 62 76Z" fill="#000" opacity=".1"/>`;
-  out += l.veil
+  out += l.veil || l.long || l.pigtails
     ? `<path d="M50 76 L50 100" stroke="${l.trim}" stroke-width="3"/>` + [82, 89, 96].map((y) => `<circle cx="50" cy="${y}" r="1.7" fill="${l.trim}"/>`).join('')
     : `<path d="M43 74 L50 84 L57 74" stroke="${l.trim}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>`;
   out += `<g transform="translate(50 ${l.child ? 44 : 41}) scale(${k})">`;
   // Behind the head: veil, hood or nothing.
   if (l.veil) out += `<path d="M-30 4 Q-32 -32 0 -32 Q32 -32 30 4 Q30 26 18 32 L-18 32 Q-30 26 -30 4Z" fill="${l.veil}" stroke="${line}" stroke-width="1.5"/><path d="M14 -28 Q30 -20 30 4 Q30 22 20 30 Q26 10 14 -28Z" fill="#000" opacity=".08"/>`;
   else if (l.hood) out += `<path d="M-30 10 Q-32 -30 0 -36 Q32 -30 30 10 Q30 30 0 32 Q-30 30 -30 10Z" fill="${l.hood}" stroke="${line}" stroke-width="1.5"/>`;
+  // Long hair falls behind the shoulders; pigtails sit on each side.
+  if (l.long) out += `<path d="M-28 2 Q-32 -30 0 -30 Q32 -30 28 2 Q32 22 30 36 Q0 42 -30 36 Q-32 22 -28 2Z" fill="${l.hair}" stroke="${line}" stroke-width="1.5"/>`;
+  if (l.pigtails) out += `<circle cx="-29" cy="-8" r="9" fill="${l.hair}" stroke="${line}" stroke-width="1.5"/><circle cx="29" cy="-8" r="9" fill="${l.hair}" stroke="${line}" stroke-width="1.5"/><circle cx="-23" cy="-12" r="3.5" fill="${l.trim}" stroke="${line}" stroke-width="1.2"/><circle cx="23" cy="-12" r="3.5" fill="${l.trim}" stroke="${line}" stroke-width="1.2"/>`;
   // Ears (hidden by a veil), face.
   if (!l.veil) out += `<circle cx="-24" cy="2" r="5" fill="${skin}" stroke="${line}" stroke-width="1.5"/><circle cx="24" cy="2" r="5" fill="${skin}" stroke="${line}" stroke-width="1.5"/>`;
   const fr = l.veil ? 21 : 24;
@@ -185,6 +210,7 @@ function bust(l: Look, happy: boolean): string {
   if (l.veil) out += `<path d="M-21 -2 Q-22 -22 0 -22 Q22 -22 21 -2 Q18 -14 0 -15 Q-18 -14 -21 -2Z" fill="${l.veil}"/>`;
   else if (l.hair && !l.hood) out += `<path d="M-24 0 Q-27 -26 0 -27 Q27 -26 24 0 Q22 -12 12 -15 Q4 -9 -6 -14 Q-18 -12 -24 0Z" fill="${l.hair}" stroke="${line}" stroke-width="1.5"/>`;
   else if (l.hair && l.hood) out += `<path d="M-18 -12 Q-10 -22 0 -21 Q10 -22 18 -12 Q8 -16 0 -14 Q-8 -16 -18 -12Z" fill="${l.hair}"/>`;
+  if (l.long) out += `<circle cx="15" cy="-19" r="4.5" fill="${l.trim === '#fff' ? '#ffd23f' : l.trim}" stroke="${line}" stroke-width="1.2"/><circle cx="15" cy="-19" r="1.6" fill="#ff5fa2"/>`;
   if (l.fez) out += `<path d="M-12 -21 L-9 -38 L9 -38 L12 -21Z" fill="#d64541" stroke="${line}" stroke-width="1.5"/><path d="M0 -38 Q9 -34 9 -24" stroke="#333" stroke-width="2" fill="none"/>`;
   // Eyes: big, dark, two highlights. Happy eyes are closed arcs.
   out += happy
@@ -237,6 +263,8 @@ const UI: Record<string, string> = {
   readyGlow: raw(256, 256, `<defs><radialGradient id="r"><stop offset=".25" stop-color="#fff9c4" stop-opacity="1"/><stop offset=".6" stop-color="#7dffb0" stop-opacity=".7"/><stop offset="1" stop-color="#2ecc71" stop-opacity="0"/></radialGradient></defs><circle cx="128" cy="128" r="128" fill="url(#r)"/>`),
   tileGreen: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9ffe6"/><stop offset="1" stop-color="#8eeab0"/></linearGradient></defs>
     <rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)" stroke="#2ecc71" stroke-width="3"/><rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".6"/>`),
+  starWhite: raw(24, 24, `<path d="M12 0 Q13.6 10.4 24 12 Q13.6 13.6 12 24 Q10.4 13.6 0 12 Q10.4 10.4 12 0Z" fill="#fff"/>`),
+  genBadge: raw(40, 40, `<circle cx="20" cy="21" r="17" fill="#24140a" opacity=".3"/><circle cx="20" cy="19" r="17" fill="#fff" stroke="#24140a" stroke-width="2.5"/><path d="M23 5 L10 22 L18 22 L15 34 L30 15 L22 15Z" fill="#ff4fa3" stroke="#24140a" stroke-width="2" stroke-linejoin="round"/>`),
   genTile: raw(96, 96, `<defs><radialGradient id="g" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fff6c8"/><stop offset=".7" stop-color="#ffe08a"/><stop offset="1" stop-color="#ffc94a"/></radialGradient></defs>
     <rect x="3" y="3" width="90" height="86" rx="16" fill="url(#g)"/><rect x="5" y="5" width="86" height="82" rx="14" fill="none" stroke="#f5b72e" stroke-width="3"/><rect x="10" y="8" width="76" height="16" rx="8" fill="#fff" opacity=".6"/>`),
   sparkle: raw(32, 32, `<path d="M16 0 L19 13 L32 16 L19 19 L16 32 L13 19 L0 16 L13 13Z" fill="#fff6c8"/><circle cx="16" cy="16" r="4" fill="#fff"/>`),
@@ -287,6 +315,13 @@ const ARCH_COLORS: Record<string, [string, string]> = {
   omar: ['#ffe2bf', '#ffb35c'],
   amr: ['#fff6b8', '#ffd84a'],
   ali: ['#ffd4cc', '#ff8f7a'],
+  wafa: ['#f3d9ff', '#d36bff'],
+  ghizlane: ['#efffc8', '#b5e23c'],
+  samira: ['#c9f7f2', '#2ec4b6'],
+  abdellah: ['#f3e3c3', '#c9a46a'],
+  amar: ['#d6e4ff', '#5b7cfa'],
+  abir: ['#ffe3f1', '#ff5fa2'],
+  tasnim: ['#e0f7ff', '#38bdf8'],
 };
 const arch = ([top, bottom]: [string, string]) => raw(220, 250, `<defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7e8"/><stop offset="1" stop-color="#f3dfbd"/></linearGradient>
     <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>

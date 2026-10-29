@@ -6,7 +6,8 @@ export type Cell =
   | null;
 
 export interface Want { chain: ChainId; level: number }
-export interface Order { who: CharacterId; wants: Want[]; coins: number }
+// stars is missing on orders from older saves: they are worth 1.
+export interface Order { who: CharacterId; wants: Want[]; coins: number; stars?: number }
 
 export interface Save {
   board: Cell[];
@@ -49,7 +50,14 @@ export function load(): Save {
   try {
     const raw = localStorage.getItem(KEY);
     // Older saves lack the newer fields; fill them in.
-    if (raw) return { dirhams: 20, tasksDone: [], lastGift: '', inbox: [], ...JSON.parse(raw) } as Save;
+    if (raw) {
+      const s = { dirhams: 20, tasksDone: [], lastGift: '', inbox: [], ...JSON.parse(raw) } as Save;
+      // Older saves could show the same person twice: give the extra slot a new order.
+      s.orders.forEach((o, k) => {
+        if (s.orders.findIndex((x) => x.who === o.who) < k) s.orders[k] = makeOrder({ ...s, orders: s.orders.filter((_, j) => j !== k) });
+      });
+      return s;
+    }
   } catch {
     // Storage can be blocked; start fresh.
   }
@@ -98,7 +106,10 @@ export const today = () => new Date().toISOString().slice(0, 10);
 
 // Orders get harder as the player earns stars.
 export function makeOrder(s: Save): Order {
-  const who = CHARACTERS[s.nextWho % CHARACTERS.length].id;
+  // Someone who is not already waiting at the counter.
+  const busy = new Set(s.orders.map((o) => o.who));
+  const free = CHARACTERS.filter((c) => !busy.has(c.id));
+  const who = free[Math.floor(Math.random() * free.length)].id;
   s.nextWho++;
   const chains = unlockedChains(s);
   const progress = s.stars + s.tasksDone.length * 2;
@@ -114,5 +125,7 @@ export function makeOrder(s: Save): Order {
     wants.push({ chain, level });
   }
   const coins = wants.reduce((sum, w) => sum + 2 ** (w.level - 1), 0);
-  return { who, wants, coins };
+  // Bigger orders are worth more stars.
+  const stars = Math.max(1, Math.min(3, wants.length + (wants.some((w) => w.level >= 4) ? 1 : 0)));
+  return { who, wants, coins, stars };
 }

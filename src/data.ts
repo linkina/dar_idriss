@@ -118,7 +118,7 @@ export const DAILY_GIFT_ENERGY = 30;
 export const CHAIN_IDS = Object.keys(CHAINS) as ChainId[];
 export const MAX_LEVEL = 6;
 
-export type CharacterId = 'idriss' | 'sarah' | 'fatima' | 'brahim' | 'omar' | 'amr' | 'ali';
+export type CharacterId = 'idriss' | 'sarah' | 'fatima' | 'brahim' | 'omar' | 'amr' | 'ali' | 'wafa' | 'ghizlane' | 'samira' | 'abdellah' | 'amar' | 'abir' | 'tasnim';
 
 export interface Character {
   id: CharacterId;
@@ -133,6 +133,13 @@ export const CHARACTERS: Character[] = [
   { id: 'omar', name: 'Omar' },
   { id: 'amr', name: 'Amr' },
   { id: 'ali', name: 'Ali' },
+  { id: 'wafa', name: 'Wafa' },
+  { id: 'ghizlane', name: 'Ghizlane' },
+  { id: 'samira', name: 'Samira' },
+  { id: 'abdellah', name: 'Abdellah' },
+  { id: 'amar', name: 'Amar' },
+  { id: 'abir', name: 'Abir' },
+  { id: 'tasnim', name: 'Tasnim' },
 ];
 
 export const COLS = 7;

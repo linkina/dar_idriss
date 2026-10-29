@@ -29,7 +29,7 @@ class BootScene extends Phaser.Scene {
   }
 }
 
-new Phaser.Game({
+(window as unknown as { game: Phaser.Game }).game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   backgroundColor: '#b5532e',
