@@ -34,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private glows: Phaser.GameObjects.Image[] = [];
   private genDecor: Phaser.GameObjects.GameObject[] = [];
   private selFrame!: Phaser.GameObjects.Container;
+  private infoBtn!: Phaser.GameObjects.Container;
   private busts: Phaser.GameObjects.Image[] = [];
   private arches: Phaser.GameObjects.Image[] = [];
   private halos: Phaser.GameObjects.Container[] = [];
@@ -71,6 +72,13 @@ export class GameScene extends Phaser.Scene {
     }
     this.selFrame = this.add.container(0, 0, [corners]).setDepth(6).setVisible(false);
     this.tweens.add({ targets: this.selFrame, scale: 1.08, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    // "i" button on the selected object: shows its whole merge chain.
+    this.infoBtn = this.add.container(0, 0, [
+      this.add.circle(0, 2, 17, 0x1d4f9c),
+      this.add.circle(0, 0, 17, 0x2471d6).setStrokeStyle(3, 0xffffff),
+      this.add.text(0, 0, 'i', { fontFamily: 'Georgia, serif', fontSize: '24px', color: '#fff', fontStyle: 'bold italic' }).setOrigin(0.5),
+    ]).setDepth(8).setVisible(false).setSize(44, 44).setInteractive({ useHandCursor: true });
+    this.infoBtn.on('pointerup', () => this.openChain());
     this.sparkles = this.add.particles(0, 0, 'sparkle', {
       speed: { min: 120, max: 320 }, angle: { min: 0, max: 360 }, scale: { start: 0.9, end: 0 },
       lifespan: 650, gravityY: 300, rotate: { min: 0, max: 360 }, emitting: false,
@@ -208,9 +216,11 @@ export class GameScene extends Phaser.Scene {
   private drawSelection() {
     this.selection.clear();
     this.selFrame.setVisible(false);
+    this.infoBtn.setVisible(false);
     if (this.selected < 0 || !this.s.board[this.selected]) return;
     const { x, y } = this.cellCenter(this.selected);
     this.selFrame.setPosition(x, y - 1).setVisible(true);
+    this.infoBtn.setPosition(x + CELL / 2 - 8, y - CELL / 2 + 8).setVisible(true);
   }
 
   private pop(i: number) {
@@ -498,6 +508,14 @@ export class GameScene extends Phaser.Scene {
   private openShop() {
     this.input.enabled = false;
     this.scene.launch('shop', { save: this.s, sfx: this.sfx, onClose: () => this.closeOverlay() });
+  }
+
+  private openChain() {
+    const cell = this.s.board[this.selected];
+    if (!cell) return;
+    this.sfx.tap();
+    this.input.enabled = false;
+    this.scene.launch('chain', { chain: cell.chain, level: cell.kind === 'item' ? cell.level : 0, sfx: this.sfx, onClose: () => this.closeOverlay() });
   }
 
   private closeOverlay() {

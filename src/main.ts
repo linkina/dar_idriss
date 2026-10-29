@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { artEntries } from './art';
 import { GameScene } from './GameScene';
+import { ChainScene } from './ChainScene';
 import { RiadScene } from './RiadScene';
 import { ShopScene } from './ShopScene';
 
@@ -32,5 +33,5 @@ new Phaser.Game({
   parent: 'game',
   backgroundColor: '#24507e',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: 720, height: 1280 },
-  scene: [BootScene, GameScene, RiadScene, ShopScene],
+  scene: [BootScene, GameScene, RiadScene, ShopScene, ChainScene],
 });
