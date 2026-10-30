@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CHAINS, MAX_LEVEL, type ChainId } from './data';
+import { CHAINS, maxLevel, type ChainId } from './data';
 import type { Sounds } from './sound';
 import { closeButton, FONT, INK, panel, text, W } from './ui';
 
@@ -34,7 +34,8 @@ export class ChainScene extends Phaser.Scene {
     const tile = 170;
     const gap = 30;
     const x0 = (W - (cols * tile + (cols - 1) * gap)) / 2;
-    for (let i = 0; i < MAX_LEVEL; i++) {
+    const max = maxLevel(d.chain);
+    for (let i = 0; i < max; i++) {
       const c = i % cols;
       const r = Math.floor(i / cols);
       const x = x0 + c * (tile + gap);
@@ -49,7 +50,7 @@ export class ChainScene extends Phaser.Scene {
       this.add.text(x + 24, y + 24, `${i + 1}`, { fontFamily: FONT, fontSize: '18px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
       this.add.text(x + tile / 2, y + tile - 26, chain.items[i], { fontFamily: FONT, fontSize: '17px', color: INK, fontStyle: 'bold', align: 'center', wordWrap: { width: tile - 12 } }).setOrigin(0.5);
       // Arrow to the next level in the same row.
-      if (c < cols - 1 && i < MAX_LEVEL - 1) this.add.text(x + tile + gap / 2, y + tile / 2, '›', { fontFamily: FONT, fontSize: '40px', color: '#d9a441', fontStyle: 'bold' }).setOrigin(0.5);
+      if (c < cols - 1 && i < max - 1) this.add.text(x + tile + gap / 2, y + tile / 2, '›', { fontFamily: FONT, fontSize: '40px', color: '#d9a441', fontStyle: 'bold' }).setOrigin(0.5);
     }
   }
 }

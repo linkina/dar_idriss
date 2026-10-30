@@ -1,4 +1,4 @@
-import { ALL_TASKS, CHARACTERS, START_CHAINS, COLS, ENERGY_MAX, ENERGY_REGEN_MS, MAX_LEVEL, ROWS, type ChainId, type CharacterId } from './data';
+import { ALL_TASKS, CHARACTERS, START_CHAINS, COLS, ENERGY_MAX, ENERGY_REGEN_MS, IMAGE_CHAINS, maxLevel, ROWS, type ChainId, type CharacterId } from './data';
 
 export type Cell =
   | { kind: 'item'; chain: ChainId; level: number }
@@ -46,6 +46,14 @@ export function idx(col: number, row: number) {
   return row * COLS + col;
 }
 
+// Generators of the illustrated chains are given to every game, old saves included.
+function ensureImageChains(s: Save) {
+  for (const c of IMAGE_CHAINS) {
+    if (!s.board.some((x) => x?.kind === 'gen' && x.chain === c) && !s.inbox.includes(c)) s.inbox.push(c);
+  }
+  return s;
+}
+
 export function load(): Save {
   try {
     const raw = localStorage.getItem(KEY);
@@ -56,12 +64,12 @@ export function load(): Save {
       s.orders.forEach((o, k) => {
         if (s.orders.findIndex((x) => x.who === o.who) < k) s.orders[k] = makeOrder({ ...s, orders: s.orders.filter((_, j) => j !== k) });
       });
-      return s;
+      return ensureImageChains(s);
     }
   } catch {
     // Storage can be blocked; start fresh.
   }
-  return newGame();
+  return ensureImageChains(newGame());
 }
 
 export function save(s: Save) {
@@ -113,7 +121,7 @@ export function makeOrder(s: Save): Order {
   s.nextWho++;
   const chains = unlockedChains(s);
   const progress = s.stars + s.tasksDone.length * 2;
-  const maxLevel = Math.min(MAX_LEVEL, 3 + Math.floor(progress / 5));
+  const cap = 3 + Math.floor(progress / 5);
   const count = progress >= 3 && Math.random() < 0.4 ? 2 : 1;
   const wants: Want[] = [];
   for (let i = 0; i < count; i++) {
@@ -121,7 +129,8 @@ export function makeOrder(s: Save): Order {
     const fresh = chains.slice(START_CHAINS.length);
     const pool = fresh.length && Math.random() < 0.5 ? fresh : chains;
     const chain = pool[Math.floor(Math.random() * pool.length)];
-    const level = 2 + Math.floor(Math.random() * (maxLevel - 1));
+    const top = Math.min(cap, maxLevel(chain));
+    const level = 2 + Math.floor(Math.random() * (top - 1));
     wants.push({ chain, level });
   }
   const coins = wants.reduce((sum, w) => sum + 2 ** (w.level - 1), 0);

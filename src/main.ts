@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { artEntries } from './art';
 import { riadEntries } from './riadArt';
+import { imageEntries } from './images';
 import { GameScene } from './GameScene';
 import { ChainScene } from './ChainScene';
 import { RiadScene } from './RiadScene';
@@ -15,16 +16,19 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    const jobs = [...artEntries(), ...riadEntries()].map(
-      ([key, svg]) =>
+    const svgs = [...artEntries(), ...riadEntries()].map(([key, svg]): [string, string] => [key, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)]);
+    // Sarah's illustrations load alongside; an image replaces any drawn texture with the same key.
+    const jobs = [...svgs, ...imageEntries()].map(
+      ([key, src]) =>
         new Promise<void>((resolve) => {
           const img = new Image();
           img.onload = () => {
+            if (this.textures.exists(key)) this.textures.remove(key);
             this.textures.addImage(key, img);
             resolve();
           };
           img.onerror = () => resolve();
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+          img.src = src;
         }),
     );
     Promise.all(jobs).then(() => this.scene.start('splash'));

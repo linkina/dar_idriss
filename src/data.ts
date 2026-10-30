@@ -1,4 +1,4 @@
-export type ChainId = 'menthe' | 'pain' | 'couture' | 'souk' | 'poterie' | 'orangers' | 'cuivre' | 'hammam';
+export type ChainId = 'menthe' | 'pain' | 'couture' | 'souk' | 'poterie' | 'orangers' | 'cuivre' | 'hammam' | 'arbres' | 'fleurs';
 
 export interface Chain {
   id: ChainId;
@@ -48,10 +48,27 @@ export const CHAINS: Record<ChainId, Chain> = {
     generator: 'Coin du hammam',
     items: ['Savon noir', 'Gant kessa', 'Serviette', "Pot d'argile ghassoul", 'Coffret de soins', 'Seau en cuivre'],
   },
+  // Illustrated by Sarah (images in src/img), on trial.
+  arbres: {
+    id: 'arbres',
+    generator: 'Arbre fruitier',
+    items: ['Mangue', 'Citron vert', 'Orange', 'Citrons', 'Pêche', 'Noix de coco'],
+  },
+  fleurs: {
+    id: 'fleurs',
+    generator: 'Nénuphar',
+    items: ['Tournesols', 'Fleurs roses', 'Vanille', 'Fleurs blanches', 'Branche de fleurs'],
+  },
 };
 
+// Chains can be of different lengths.
+export const maxLevel = (c: ChainId) => CHAINS[c].items.length;
+
+// Chains drawn as images rather than code-drawn SVG.
+export const IMAGE_CHAINS: ChainId[] = ['arbres', 'fleurs'];
+
 // Chains the player has at the start; the others come from renovation tasks.
-export const START_CHAINS: ChainId[] = ['menthe', 'pain', 'couture'];
+export const START_CHAINS: ChainId[] = ['menthe', 'pain', 'couture', 'arbres', 'fleurs'];
 
 export interface Task {
   id: string;

@@ -239,12 +239,9 @@ export const raw = (w: number, h: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
 
 const UI: Record<string, string> = {
-  tile: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbf2"/><stop offset="1" stop-color="#f6e6c8"/></linearGradient></defs>
-    <rect x="3" y="6" width="90" height="88" rx="16" fill="#d9b98a"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
-    <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".8"/>`),
-  tileAlt: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef5fc"/><stop offset="1" stop-color="#cfe0f2"/></linearGradient></defs>
-    <rect x="3" y="6" width="90" height="88" rx="16" fill="#97b6d8"/><rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)"/>
-    <rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".7"/>`),
+  // Board tiles stay flat: no relief on the board background.
+  tile: raw(96, 96, `<rect x="2" y="2" width="92" height="92" rx="12" fill="#fdf3dc"/>`),
+  tileAlt: raw(96, 96, `<rect x="2" y="2" width="92" height="92" rx="12" fill="#dfeaf6"/>`),
   tray: raw(220, 96, `<defs><linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbf2"/><stop offset="1" stop-color="#f6e6c8"/></linearGradient></defs>
     <rect x="2" y="10" width="216" height="84" rx="22" fill="#5a2410" opacity=".35"/><rect x="0" y="4" width="220" height="84" rx="22" fill="#1d3f94"/><rect x="2" y="6" width="216" height="80" rx="21" fill="none" stroke="#e0b048" stroke-width="2"/>
     <rect x="4" y="4" width="212" height="78" rx="20" fill="url(#p)"/><rect x="14" y="8" width="192" height="16" rx="8" fill="#fff"/>`),
@@ -261,8 +258,7 @@ const UI: Record<string, string> = {
     <rect x="4" y="10" width="102" height="102" rx="26" fill="#146b38"/><rect x="4" y="4" width="102" height="102" rx="26" fill="url(#g)" stroke="#fff" stroke-width="5"/>
     <rect x="16" y="12" width="78" height="24" rx="12" fill="#fff" opacity=".35"/><path d="M30 56 L48 74 L82 36" stroke="#fff" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`),
   readyGlow: raw(256, 256, `<defs><radialGradient id="r"><stop offset=".25" stop-color="#fff9c4" stop-opacity="1"/><stop offset=".6" stop-color="#7dffb0" stop-opacity=".7"/><stop offset="1" stop-color="#2ecc71" stop-opacity="0"/></radialGradient></defs><circle cx="128" cy="128" r="128" fill="url(#r)"/>`),
-  tileGreen: raw(96, 96, `<defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9ffe6"/><stop offset="1" stop-color="#8eeab0"/></linearGradient></defs>
-    <rect x="3" y="3" width="90" height="86" rx="16" fill="url(#t)" stroke="#2ecc71" stroke-width="3"/><rect x="8" y="6" width="80" height="18" rx="9" fill="#fff" opacity=".6"/>`),
+  tileGreen: raw(96, 96, `<rect x="2" y="2" width="92" height="92" rx="12" fill="#a8f0c2" stroke="#2ecc71" stroke-width="3"/>`),
   starWhite: raw(24, 24, `<path d="M12 0 Q13.6 10.4 24 12 Q13.6 13.6 12 24 Q10.4 13.6 0 12 Q10.4 10.4 12 0Z" fill="#fff"/>`),
   genBadge: raw(40, 40, `<circle cx="20" cy="21" r="17" fill="#24140a" opacity=".3"/><circle cx="20" cy="19" r="17" fill="#fff" stroke="#24140a" stroke-width="2.5"/><path d="M23 5 L10 22 L18 22 L15 34 L30 15 L22 15Z" fill="#ff4fa3" stroke="#24140a" stroke-width="2" stroke-linejoin="round"/>`),
   genTile: raw(96, 96, `<defs><radialGradient id="g" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#fff6c8"/><stop offset=".7" stop-color="#ffe08a"/><stop offset="1" stop-color="#ffc94a"/></radialGradient></defs>

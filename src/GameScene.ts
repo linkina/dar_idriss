@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ALL_TASKS, CHAINS, CHARACTERS, COLS, ENERGY_MAX, MAX_LEVEL, ROWS } from './data';
+import { ALL_TASKS, CHAINS, CHARACTERS, COLS, ENERGY_MAX, IMAGE_CHAINS, maxLevel, ROWS } from './data';
 import { Sounds } from './sound';
 import { load, makeOrder, msToNextEnergy, save, tickEnergy, today, type Cell, type Order, type Save } from './state';
 import { H, W } from './ui';
@@ -16,12 +16,15 @@ const TALL = PANEL_H >= 190;
 const CHAIN_COLOR: Record<string, number> = {
   menthe: 0x22b35e, pain: 0xf39c12, couture: 0xe84393, souk: 0x8e44ad,
   poterie: 0x2471d6, orangers: 0xff7f11, cuivre: 0xc0392b, hammam: 0x14b8a6,
+  arbres: 0x6a9a1f, fleurs: 0xe8578f,
 };
 const HINT_DELAY_MS = 6000;
 const hex = (c: number) => '#' + c.toString(16).padStart(6, '0');
 const FONT = '"Trebuchet MS", "Segoe UI", sans-serif';
 const INK = '#1a2f6b';
 
+// Illustrations fill their whole square, so they are drawn a little smaller.
+const spriteSize = (c: NonNullable<Cell>) => (IMAGE_CHAINS.includes(c.chain) ? CELL - 8 : CELL + 2);
 const texKey = (c: NonNullable<Cell>) => (c.kind === 'gen' ? `gen-${c.chain}` : `${c.chain}-${c.level}`);
 const cellName = (c: NonNullable<Cell>) => (c.kind === 'gen' ? CHAINS[c.chain].generator : CHAINS[c.chain].items[c.level - 1]);
 
@@ -187,7 +190,7 @@ export class GameScene extends Phaser.Scene {
 
   private makeSprite(cell: NonNullable<Cell>, i: number) {
     const { x, y } = this.cellCenter(i);
-    const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(CELL + 2, CELL + 2).setDepth(2);
+    const sp = this.add.image(x, y - 2, texKey(cell)).setDisplaySize(spriteSize(cell), spriteSize(cell)).setDepth(2);
     if (cell.kind === 'gen') {
       // Generators carry a pink energy badge in the corner: tapping them costs energy.
       const badge = this.add.image(x + CELL / 2 - 16, y + CELL / 2 - 16, 'genBadge').setDisplaySize(34, 34).setDepth(3);
@@ -211,7 +214,7 @@ export class GameScene extends Phaser.Scene {
       this.dragging = true;
       this.tweens.killTweensOf(sp);
       (sp.getData('decor') as Phaser.GameObjects.Image[] | undefined)?.forEach((d) => d.setVisible(false));
-      sp.setDepth(10).setDisplaySize(CELL + 16, CELL + 16);
+      sp.setDepth(10).setDisplaySize(spriteSize(cell) + 14, spriteSize(cell) + 14);
       this.sfx.tap();
     });
     sp.on('drag', (_p: Phaser.Input.Pointer, dx: number, dy: number) => sp.setPosition(dx, dy));
@@ -254,7 +257,7 @@ export class GameScene extends Phaser.Scene {
   private pop(i: number) {
     const sp = this.sprites[i];
     if (!sp) return;
-    const size = CELL + 2;
+    const size = spriteSize(this.s.board[i]!);
     sp.setDisplaySize(size * 0.4, size * 0.4);
     const burst = this.add.image(sp.x, sp.y, 'rays').setDepth(1.6).setDisplaySize(CELL, CELL);
     this.tweens.add({ targets: burst, displayWidth: CELL * 3, displayHeight: CELL * 3, angle: 90, alpha: 0, duration: 700, ease: 'Cubic.Out', onComplete: () => burst.destroy() });
@@ -310,7 +313,8 @@ export class GameScene extends Phaser.Scene {
     }
     const color = CHAIN_COLOR[cell.chain] ?? 0x3cb4e0;
     const name = cellName(cell);
-    const tag = cell.kind === 'gen' ? 'Générateur' : `Niveau ${cell.level}/${MAX_LEVEL}`;
+    const max = maxLevel(cell.chain);
+    const tag = cell.kind === 'gen' ? 'Générateur' : `Niveau ${cell.level}/${max}`;
     const title = this.add.text(0, 4, name, { fontFamily: FONT, fontSize: '26px', color: hex(color), fontStyle: 'bold', stroke: '#fff', strokeThickness: 5 }).setOrigin(0.5, 0);
     const pillW = tag.length * 10 + 30;
     const pill = this.add.graphics();
@@ -319,8 +323,8 @@ export class GameScene extends Phaser.Scene {
     head.add([title, pill, this.add.text(0, 57, tag, { fontFamily: FONT, fontSize: '17px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5)]);
     // The family, from level 1 to the last, current level highlighted.
     const step = 76;
-    for (let n = 0; n < MAX_LEVEL; n++) {
-      const x = (n - (MAX_LEVEL - 1) / 2) * step;
+    for (let n = 0; n < max; n++) {
+      const x = (n - (max - 1) / 2) * step;
       const current = cell.kind === 'item' && cell.level === n + 1;
       const done = cell.kind === 'item' && n + 1 < cell.level;
       const bg = this.add.graphics();
@@ -328,7 +332,7 @@ export class GameScene extends Phaser.Scene {
       if (current) bg.lineStyle(4, 0xffd21f, 1).strokeRoundedRect(x - 33, 90, 66, 66, 16);
       head.add(bg);
       head.add(this.add.image(x, 123, `${cell.chain}-${n + 1}`).setDisplaySize(58, 58));
-      if (n < MAX_LEVEL - 1) head.add(this.add.text(x + step / 2, 123, '›', { fontFamily: FONT, fontSize: '24px', color: hex(color), fontStyle: 'bold' }).setOrigin(0.5));
+      if (n < max - 1) head.add(this.add.text(x + step / 2, 123, '›', { fontFamily: FONT, fontSize: '24px', color: hex(color), fontStyle: 'bold' }).setOrigin(0.5));
     }
   }
 
@@ -342,8 +346,8 @@ export class GameScene extends Phaser.Scene {
     if (cell.kind === 'gen') return this.generate(i);
     this.sfx.tap();
     const chain = CHAINS[cell.chain];
-    this.say(cell.level < MAX_LEVEL
-      ? `${cellName(cell)} (niveau ${cell.level}/${MAX_LEVEL}). Fusionne-en deux pour obtenir : ${chain.items[cell.level]}.`
+    this.say(cell.level < maxLevel(cell.chain)
+      ? `${cellName(cell)} (niveau ${cell.level}/${maxLevel(cell.chain)}). Fusionne-en deux pour obtenir : ${chain.items[cell.level]}.`
       : `${cellName(cell)} : niveau maximum ! Les invités l'adorent.`);
   }
 
@@ -375,7 +379,8 @@ export class GameScene extends Phaser.Scene {
         const k = tw.getValue() ?? 1;
         sp.x = from.x + (to.x - from.x) * k;
         sp.y = (1 - k) * (1 - k) * from.y + 2 * (1 - k) * k * peak + k * k * (to.y - 2);
-        sp.setDisplaySize((CELL + 2) * (0.3 + 0.7 * k), (CELL + 2) * (0.3 + 0.7 * k));
+        const sz = spriteSize(this.s.board[target]!) * (0.3 + 0.7 * k);
+        sp.setDisplaySize(sz, sz);
       },
     });
     this.say(`${CHAINS[gen.chain].generator} : +1 ${CHAINS[gen.chain].items[0].toLowerCase()}. Glisse deux objets identiques l'un sur l'autre pour les fusionner.`);
@@ -408,7 +413,7 @@ export class GameScene extends Phaser.Scene {
       b[from] = null;
       this.selected = to;
       this.sfx.move();
-    } else if (a.kind === 'item' && t.kind === 'item' && a.chain === t.chain && a.level === t.level && a.level < MAX_LEVEL) {
+    } else if (a.kind === 'item' && t.kind === 'item' && a.chain === t.chain && a.level === t.level && a.level < maxLevel(a.chain)) {
       const level = a.level + 1;
       b[to] = { kind: 'item', chain: a.chain, level };
       b[from] = null;
@@ -418,7 +423,7 @@ export class GameScene extends Phaser.Scene {
       this.pop(to);
       const { x, y } = this.cellCenter(to);
       this.float(x, y - 30, CHAINS[a.chain].items[level - 1], '#fff8e1');
-      this.say(level < MAX_LEVEL
+      this.say(level < maxLevel(a.chain)
         ? `Bravo : ${CHAINS[a.chain].items[level - 1]} ! Prochaine étape : ${CHAINS[a.chain].items[level]}.`
         : `Magnifique : ${CHAINS[a.chain].items[level - 1]}, le plus bel objet de la famille !`);
       return this.afterChange(false);
@@ -641,7 +646,7 @@ export class GameScene extends Phaser.Scene {
     const b = this.s.board;
     for (let i = 0; i < b.length; i++) {
       const a = b[i];
-      if (a?.kind !== 'item' || a.level >= MAX_LEVEL) continue;
+      if (a?.kind !== 'item' || a.level >= maxLevel(a.chain)) continue;
       const j = b.findIndex((c, k) => k > i && c?.kind === 'item' && c.chain === a.chain && c.level === a.level);
       const si = this.sprites[i];
       const sj = this.sprites[j];
