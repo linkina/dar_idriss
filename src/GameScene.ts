@@ -205,6 +205,12 @@ export class GameScene extends Phaser.Scene {
       // Generators breathe gently so the player sees they can be tapped.
       this.tweens.add({ targets: sp, scaleY: sp.scaleY * 1.05, scaleX: sp.scaleX * 0.97, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut', delay: i * 37 });
     }
+    if (cell.kind === 'item' && cell.level === maxLevel(cell.chain)) {
+      // Last level of its family: a little yellow crown in the corner.
+      const crown = this.add.image(x - CELL / 2 + 16, y - CELL / 2 + 14, 'crown').setDisplaySize(32, 26).setAngle(-15).setDepth(3);
+      this.genDecor.push(crown);
+      sp.setData('decor', [crown]);
+    }
     sp.setInteractive({ useHandCursor: true, draggable: true });
     sp.setData('cell', i);
     sp.on('pointerup', () => {
